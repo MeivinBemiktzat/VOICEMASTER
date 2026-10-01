@@ -127,7 +127,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           sourceText,
         }),
       });
-      if (!initResponse.ok) throw new Error("לא ניתן להכין את שמירת הקריינות");
+      if (!initResponse.ok) {
+        const error = await initResponse.json().catch(() => ({}));
+        throw new Error(error?.error || "לא ניתן להכין את שמירת הקריינות");
+      }
 
       const init = (await initResponse.json()) as { id: string };
       const uploadResponse = await fetch(`/api/voiceovers/${encodeURIComponent(init.id)}`, {
@@ -135,7 +138,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": blob.type || "audio/wav" },
         body: blob,
       });
-      if (!uploadResponse.ok) throw new Error("העלאת קובץ האודיו נכשלה");
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json().catch(() => ({}));
+        throw new Error(error?.error || "העלאת קובץ האודיו נכשלה");
+      }
 
       const completeResponse = await fetch("/api/voiceovers/complete", {
         method: "POST",
@@ -143,7 +149,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: init.id }),
       });
-      if (!completeResponse.ok) throw new Error("לא ניתן להשלים את שמירת הקריינות");
+      if (!completeResponse.ok) {
+        const error = await completeResponse.json().catch(() => ({}));
+        throw new Error(error?.error || "לא ניתן להשלים את שמירת הקריינות");
+      }
 
       await refreshTracks();
     },
