@@ -1,11 +1,12 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { randomUUID } from "node:crypto";
 import { getSession, getJson, key, removeObject, s3 } from "../lib/storage.js";
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export const config = { api: { bodyParser: false } };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const requestId = crypto.randomUUID();
+  const requestId = randomUUID();
   const startedAt = Date.now();
   const log = (message: string, data: Record<string, unknown> = {}) =>
     console.log("[VoiceMaster][voiceover-id]", JSON.stringify({
