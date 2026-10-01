@@ -1,9 +1,28 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { getSession, getJson, key, removeObject, s3 } from "../lib/storage.js";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+
+export const config = { api: { bodyParser: false } };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    if (req.method === "PUT") {
+      const sessionId = getSession(req, res);
+      const id = String(req.query.id || "");
+      if (!/^[a-f0-9-]{36}$/.test(id)) return res.status(400).json({ error: "Invalid id" });
+      const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
+      const metadata = await getJson<any>(metadataKey);
+      if (!metadata || metadata.status !== "uploading") return res.status(404).json({ error: "Upload not found" });
+
+      await s3.send(new PutObjectCommand({
+        Bucket: process.env.HF_STORAGE_BUCKET!,
+        Key: metadata.audioKey,
+        Body: req,
+        ContentType: String(req.headers["content-type"] || "audio/wav"),
+      }));
+      return res.status(200).json({ ok: true });
+    }
+
     if (req.method === "GET") {
       const sessionId = getSession(req, res);
       const id = String(req.query.id || "");
