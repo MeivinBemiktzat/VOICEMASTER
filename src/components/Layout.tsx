@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { to: "/narration", label: "סטודיו קריינות" },
   { to: "/podcast", label: "סטודיו פודקאסט" },
   { to: "/history", label: "היסטוריה" },
+  { to: "/updates", label: "עדכונים" },
   { to: "/settings", label: "הגדרות" },
   { to: "/about", label: "אודות" },
 ];
@@ -256,7 +257,7 @@ export default function Layout() {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setProfileOpen((open) => !open)}
-                  className="flex size-10 items-center justify-center overflow-hidden rounded-xl border border-line bg-bg/60 text-sm font-black text-onbrand"
+                  className="flex size-10 items-center justify-center overflow-hidden rounded-full border border-line bg-bg/60 text-sm font-black text-onbrand"
                   aria-label="תפריט פרופיל"
                   title={user.username}
                 >
