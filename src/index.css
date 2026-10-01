@@ -38,9 +38,28 @@ html {
 
 body {
   @apply bg-bg font-body text-ink antialiased;
-  background-image: radial-gradient(circle at 85% 0%, rgb(var(--brand) / 0.07), transparent 28rem),
-    radial-gradient(circle at 10% 80%, rgb(255 200 61 / 0.06), transparent 24rem);
+  background-image: radial-gradient(circle at 85% 0%, rgb(var(--brand) / 0.08), transparent 30rem),
+    radial-gradient(circle at 10% 80%, rgb(255 200 61 / 0.08), transparent 26rem),
+    linear-gradient(135deg, rgb(var(--bg)) 0%, rgb(var(--soft) / 0.32) 48%, rgb(var(--bg)) 100%);
   background-attachment: fixed;
+}
+
+.ambient-orb {
+  opacity: 0.42;
+  filter: blur(72px);
+  animation: orb-float 14s ease-in-out infinite alternate;
+}
+.orb-blue { background: rgb(var(--brand) / 0.19); }
+.orb-violet { background: rgb(139 92 246 / 0.13); animation-delay: -4s; }
+.orb-gold { background: rgb(245 184 48 / 0.16); animation-delay: -8s; }
+.orb-pink { background: rgb(236 72 153 / 0.09); animation-delay: -11s; }
+.ambient-dot { background: rgb(var(--brand) / 0.2); box-shadow: 0 0 24px 8px rgb(var(--brand) / 0.12); }
+.dot-two { background: rgb(245 184 48 / 0.32); }
+.dot-three { background: rgb(139 92 246 / 0.25); }
+
+@keyframes orb-float {
+  from { transform: translate3d(-10px, 8px, 0) scale(0.96); }
+  to { transform: translate3d(12px, -12px, 0) scale(1.04); }
 }
 
 ::selection {
