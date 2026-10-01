@@ -62,6 +62,16 @@ export function getSession(req: any, res: any) {
 export const key = (sessionId: string, suffix: string) => `users/${sessionId}/${suffix}`;
 export const statsKey = "_system/stats.json";
 export const profileKey = (sessionId: string) => key(sessionId, "profile.json");
+export async function requireUser(req: any) {
+  const cookies = String(req.headers?.cookie || "");
+  const raw = cookies.match(/(?:^|;\\s*)vm_auth=([^;]+)/)?.[1];
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(raw, "base64url").toString());
+    if (typeof parsed.userId !== "string") return null;
+    return await getJson<any>(profileKey(parsed.userId));
+  } catch { return null; }
+}
 
 export async function putJson(objectKey: string, value: unknown) {
   console.log("[VoiceMaster][storage]", JSON.stringify({ operation: "putJson", key: objectKey }));
