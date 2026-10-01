@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 246 245 251;
+  --surface: 255 255 255;
+  --soft: 238 237 248;
+  --line: 222 220 240;
+  --ink: 20 18 58;
+  --mute: 94 92 133;
+  --brand: 51 56 214;
+  --onbrand: 255 255 255;
+  --danger: 194 49 47;
+  --ok: 30 127 92;
+  --shadow: 20 18 58;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: 13 12 26;
+  --surface: 22 21 42;
+  --soft: 31 30 56;
+  --line: 44 42 74;
+  --ink: 237 235 255;
+  --mute: 163 161 200;
+  --brand: 139 146 255;
+  --onbrand: 13 12 26;
+  --danger: 255 138 135;
+  --ok: 95 211 163;
+  --shadow: 0 0 0;
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-bg font-body text-ink antialiased;
+}
+
+::selection {
+  background: rgb(var(--brand));
+  color: rgb(var(--onbrand));
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-brand text-onbrand hover:brightness-110;
+  }
+  .btn-sun {
+    @apply bg-sun text-sunink hover:brightness-105;
+  }
+  .btn-quiet {
+    @apply bg-soft text-ink hover:bg-line;
+  }
+  .btn-outline {
+    @apply border border-line bg-surface text-ink hover:border-brand;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink placeholder:text-mute/70
+      focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface shadow-lift;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-bold text-mute;
+  }
+}
+
+textarea::-webkit-scrollbar,
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+textarea::-webkit-scrollbar-thumb,
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgb(var(--brand) / 0.3);
+  border-radius: 10px;
+}
+
+audio {
+  max-width: 100%;
+  height: 36px;
+}
+
+@keyframes bar-pulse {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.wave-bar {
+  transform-origin: center;
+  animation: bar-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .wave-bar {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
