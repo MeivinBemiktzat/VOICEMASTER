@@ -36,6 +36,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const salt = randomBytes(16).toString("hex");
       users[normalized] = { userId, salt, hash: hashPassword(password, salt) };
       await putJson(usersKey, users);
+      const { updateStats } = await import("./lib/storage.js");
+      await updateStats({ users: 1 });
       await putJson(profileKey(userId), { userId, username, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
       setAuth(res, userId);
       return send(res, 201, { user: { userId, username } });
