@@ -20,7 +20,7 @@ export default function TrackCard({ track, onRemove }: { track: Track; onRemove:
       <div className="flex w-full items-center justify-between gap-2 border-t border-line pt-2 sm:w-auto sm:justify-end sm:border-t-0 sm:pt-0">
         <audio src={track.url} controls className="w-full sm:w-48" />
         <a
-          href={track.url}
+          href={`${track.url}?download=1`}
           download={`${track.kind}_${track.createdAt}.wav`}
           className="shrink-0 rounded-lg p-2 text-brand hover:bg-soft"
           title="הורדה"
