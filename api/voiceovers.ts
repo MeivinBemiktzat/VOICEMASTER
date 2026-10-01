@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!title || !voice || !style) return sendError(res, 400, "Missing track metadata");
 
       const id = randomUUID();
-      const audioKey = key(sessionId, `voiceovers/${id}/audio.wa`);
+      const audioKey = key(sessionId, `voiceovers/${id}/audio.js`);
       const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
       log("creating_voiceover", { id, audioKey, metadataKey, title, voice, style, kind, sourceTextLength: sourceText?.length || 0 });
       await putJson(metadataKey, {
