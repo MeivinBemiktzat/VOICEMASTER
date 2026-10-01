@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
-import { getSession, ensureProfile, getJson, key, listKeys, putJson, signedDownload, signedUpload, updateStats } from "./lib/storage.js";
+import { getSession, ensureProfile, getJson, key, listKeys, putJson, updateStats } from "./lib/storage.js";
 
 function sendError(res: VercelResponse, status: number, message: string) {
   res.status(status).json({ error: message });
@@ -17,7 +17,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const tracks = [];
       for (const objectKey of keys.filter((k) => k.endsWith("/metadata.json"))) {
         const meta = await getJson<any>(objectKey);
-        if (!meta) continue;
+        if (!meta || meta.status !== "ready") continue;
         tracks.push({
           id: meta.id,
           title: meta.title,
@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           style: meta.style,
           createdAt: meta.createdAt,
           kind: meta.kind,
-          url: await signedDownload(meta.audioKey),
+          url: `/api/voiceovers/${meta.id}`,
         });
       }
       tracks.sort((a, b) => b.createdAt - a.createdAt);
@@ -49,8 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         createdAt: Date.now(), audioKey,
         status: "uploading",
       });
-      const uploadUrl = await signedUpload(audioKey, "audio/wav");
-      return res.status(201).json({ id, uploadUrl });
+      return res.status(201).json({ id });
     }
 
     return sendError(res, 405, "Method not allowed");
