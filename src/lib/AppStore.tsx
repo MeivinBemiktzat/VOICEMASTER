@@ -4,6 +4,7 @@ import { readStoredArray, writeStored, STORAGE_KEYS } from "./storage";
 import { useApiKeys } from "../hooks/useApiKeys";
 import { styleCatalog as baseStyleCatalog } from "./catalogs";
 import { getTracks as getLocalTracks, saveTrack, deleteTrack, clearTracks as clearLocalTracks } from "./localTracks";
+import { useAuth } from "./AuthContext";
 
 interface AppStoreValue {
   currentApiKey: string;
@@ -53,6 +54,7 @@ async function fetchTracks(): Promise<StoredTrack[]> {
 
 export function AppStoreProvider({ children }: { children: ReactNode }) {
   const apiKeys = useApiKeys();
+  const { user } = useAuth();
   const [customStyles, setCustomStyles] = useState<StyleOption[]>(() =>
     readStoredArray<StyleOption>(STORAGE_KEYS.customStyles)
   );
@@ -76,7 +78,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const setAccent = useCallback((value: string) => {
     setAccentState(value);
     writeStored(STORAGE_KEYS.accent, value);
-  }, []);
+  }, [user]);
 
   const setCompact = useCallback((value: boolean) => {
     setCompactState(value);
@@ -93,7 +95,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [accent, compact]);
 
   const refreshTracks = useCallback(async () => {
-    const local = await getLocalTracks();
+    const local = user ? await getLocalTracks(user.userId) : [];
     const resolved = local.map((track) => ({
       ...track,
       url: URL.createObjectURL(track.blob),
@@ -122,12 +124,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       throw new Error(error?.error || "לא ניתן לשמור את סטטיסטיקת הקריינות");
     }
     const id = crypto.randomUUID();
-    await saveTrack({ id, title, voice: trackVoice, style: trackStyle, kind, sourceText, createdAt: Date.now(), blob });
+    await saveTrack({ ownerId: user?.userId || "", id, title, voice: trackVoice, style: trackStyle, kind, sourceText, createdAt: Date.now(), blob });
     await refreshTracks();
   }, [refreshTracks]);
 
   const removeTrack = useCallback(async (id: string) => {
-    await deleteTrack(id);
+    if (user) await deleteTrack(user.userId, id);
     setTracks((prev) => prev.filter((track) => track.id !== id));
     setAudioUrls((previous) => {
       if (previous[id]) URL.revokeObjectURL(previous[id]);
@@ -138,7 +140,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearTracks = useCallback(async () => {
-    await clearLocalTracks();
+    if (user) await clearLocalTracks(user.userId);
     Object.values(audioUrls).forEach(URL.revokeObjectURL);
     setAudioUrls({}); setTracks([]);
   }, [audioUrls]);
