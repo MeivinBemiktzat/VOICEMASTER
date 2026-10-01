@@ -1,0 +1,23 @@
+import { useEffect,useState } from "react";
+import { ShieldCheck, Users, Mic2, Type, RefreshCw } from "lucide-react";
+import { useAuth } from "../lib/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "../lib/ToastContext";
+
+type AdminUser={userId:string;username:string;role:"user"|"admin";createdAt:string};
+type Stats=Record<string,any>;
+
+export default function Admin(){
+ const {user,loading}=useAuth(); const navigate=useNavigate(); const toast=useToast();
+ const [users,setUsers]=useState<AdminUser[]>([]); const [stats,setStats]=useState<Stats>({}); const [busy,setBusy]=useState(true);
+ const load=async()=>{setBusy(true);try{const r=await fetch("/api/admin",{credentials:"same-origin"});const d=await r.json().catch(()=>({}));if(r.status===403){toast("אין לך גישה לממשק הניהול");return;}if(!r.ok)throw new Error(d.error||"לא ניתן לטעון את ממשק הניהול");setUsers(d.users||[]);setStats(d.stats||{});}catch(e){toast(e instanceof Error?e.message:"שגיאה");}finally{setBusy(false);}};
+ useEffect(()=>{if(!loading&&!user){toast("יש להתחבר כדי להיכנס לניהול");navigate("/login");return;}if(!loading&&user&&!user.role?.includes("admin")){toast("אין לך גישה לממשק הניהול");navigate("/");return;}if(user?.role==="admin")load();},[loading,user]);
+ const setRole=async(u:AdminUser,role:"user"|"admin")=>{try{const r=await fetch("/api/admin",{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:u.userId,role})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"לא ניתן לשנות הרשאה");setUsers(prev=>prev.map(x=>x.userId===u.userId?{...x,role}:x));toast("הרשאת המשתמש עודכנה","success");}catch(e){toast(e instanceof Error?e.message:"שגיאה");}};
+ if(loading||busy)return <section className="mx-auto max-w-5xl py-16 text-center text-mute">טוען ממשק ניהול...</section>;
+ if(!user||user.role!=="admin")return <section className="mx-auto max-w-xl py-16 text-center"><div className="card rounded-[2rem] p-8"><ShieldCheck className="mx-auto mb-4 text-danger" size={42}/><h1 className="font-display text-2xl font-black text-ink">אין לך גישה לממשק הניהול</h1><p className="mt-2 text-sm text-mute">העמוד הזה זמין למנהלי האתר בלבד.</p></div></section>;
+ return <section className="mx-auto max-w-5xl">
+  <div className="mb-7 flex items-start justify-between gap-4"><div className="flex items-start gap-4"><div className="rounded-2xl bg-brand/10 p-3 text-brand"><ShieldCheck size={26}/></div><div><p className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-brand">ניהול</p><h1 className="font-display text-3xl font-black text-ink sm:text-4xl">ממשק ניהול</h1><p className="mt-2 text-sm text-mute">סטטיסטיקות, משתמשים והרשאות.</p></div></div><button onClick={load} className="btn btn-outline"><RefreshCw size={16}/>רענון</button></div>
+  <div className="mb-5 grid gap-4 sm:grid-cols-3"><div className="card rounded-2xl p-5"><Users className="mb-3 text-brand"/><p className="text-xs font-bold text-mute">משתמשים</p><p className="text-3xl font-black text-ink">{stats.users??users.length}</p></div><div className="card rounded-2xl p-5"><Mic2 className="mb-3 text-brand"/><p className="text-xs font-bold text-mute">קריינויות</p><p className="text-3xl font-black text-ink">{stats.voiceoversCreated??0}</p></div><div className="card rounded-2xl p-5"><Type className="mb-3 text-brand"/><p className="text-xs font-bold text-mute">תווים</p><p className="text-3xl font-black text-ink">{stats.totalCharacters??0}</p></div></div>
+  <div className="card overflow-hidden rounded-[2rem]"><div className="border-b border-line px-5 py-4"><h2 className="font-display text-xl font-black text-ink">רשימת משתמשים</h2></div><div className="divide-y divide-line">{users.map(u=><div key={u.userId} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-black text-ink">{u.username}</p><p className="text-xs text-mute">{u.role==="admin"?"מנהל":"משתמש רגיל"}</p></div><div className="flex gap-2"><button onClick={()=>setRole(u,"user")} disabled={u.role==="user"||u.userId===user.userId} className={`btn ${u.role==="user"?"btn-primary":"btn-outline"}`}>משתמש רגיל</button><button onClick={()=>setRole(u,"admin")} disabled={u.role==="admin"} className={`btn ${u.role==="admin"?"btn-primary":"btn-outline"}`}>מנהל</button></div></div>)}</div></div>
+ </section>;
+}
