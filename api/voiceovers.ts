@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { randomUUID } from "node:crypto";
 import { getSession, ensureProfile, getJson, key, listKeys, putJson, signedDownload, signedUpload, updateStats } from "./_storage";
 
 function sendError(res: VercelResponse, status: number, message: string) {
@@ -40,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const sourceText = typeof body.sourceText === "string" ? body.sourceText.slice(0, 20000) : undefined;
       if (!title || !voice || !style) return sendError(res, 400, "Missing track metadata");
 
-      const id = globalThis.crypto?.randomUUID?.() || require("node:crypto").randomUUID();
+      const id = randomUUID();
       const audioKey = key(sessionId, `voiceovers/${id}/audio.wav`);
       const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
       await putJson(metadataKey, {
