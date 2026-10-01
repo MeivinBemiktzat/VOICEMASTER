@@ -212,9 +212,7 @@ export default function Layout() {
       <header className="site-header sticky top-0 z-40 border-b border-white/10 bg-bg/45 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <NavLink to="/" className="flex items-center gap-2.5 sm:gap-3">
-            <div className="rounded-2xl bg-gradient-to-br from-brand via-violet-500 to-sun p-2 text-white shadow-lg ring-8 ring-brand/10 sm:p-2.5">
-              <Mic2 size={22} />
-            </div>
+            <img src="/voicemaster-logo.png" alt="VoiceMaster" className="h-12 w-[60px] object-contain drop-shadow-lg sm:h-14 sm:w-[70px]" />
             <div>
               <h1 className="font-display text-xl font-black leading-none tracking-tight text-ink sm:text-2xl">
                 Voice<span className="text-brand">Master</span>
