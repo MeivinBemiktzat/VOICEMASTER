@@ -44,6 +44,7 @@ export default function Podcast() {
   };
 
   const generateAudio = () => {
+    if (!user) { navigate("/register"); return; }
     if (!script.trim()) return showToast("אין תסריט להפקה. צרו תסריט תחילה");
     const selectedStyle = store.allStyles.find((s) => s.value === store.style);
     const styleInstruction = selectedStyle?.instruction || selectedStyle?.label || store.style;
