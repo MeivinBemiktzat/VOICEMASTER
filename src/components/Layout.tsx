@@ -4,6 +4,7 @@ import { Mic2, Moon, Sun, KeyRound, Menu, X, Copy, Trash2, Check, Settings, Pale
 import { useDarkMode } from "../hooks/useDarkMode";
 import { useAppStore } from "../lib/AppStore";
 import { useToast } from "../lib/ToastContext";
+import { useAuth } from "../lib/AuthContext";
 
 const NAV_LINKS = [
   { to: "/", label: "בית", end: true },
@@ -194,6 +195,7 @@ function ApiKeyPopover() {
 
 export default function Layout() {
   const { isDark, toggle } = useDarkMode();
+  const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -241,6 +243,16 @@ export default function Layout() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {user ? (
+              <NavLink to="/settings" className="flex items-center gap-2 rounded-xl border border-line bg-bg/60 px-2 py-1.5">
+                <span className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-brand text-xs font-black text-onbrand">
+                  {user.avatarDataUrl ? <img src={user.avatarDataUrl} alt="" className="size-full object-cover" /> : user.username.slice(0,1).toUpperCase()}
+                </span>
+                <span className="hidden max-w-24 truncate text-xs font-bold text-ink sm:inline">{user.username}</span>
+              </NavLink>
+            ) : (
+              <NavLink to="/login" className="btn btn-outline !px-3 text-xs">התחברות</NavLink>
+            )}
             <button
               onClick={toggle}
               className="btn btn-outline !px-2.5 sm:!px-3"
