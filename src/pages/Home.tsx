@@ -27,11 +27,11 @@ const FEATURES = [
 
 export default function Home() {
   return (
-    <div className="space-y-14 sm:space-y-20">
-      <section className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+    <div className="home-landing space-y-14 sm:space-y-20">
+      <section className="hero-section grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
         <div>
-          <span className="luxury-chip mb-4 inline-block">בינה מלאכותית · קריינות בעברית</span>
-          <h1 className="font-display text-3xl font-black leading-tight text-ink sm:text-5xl">
+          <span className="luxury-chip hero-kicker mb-4 inline-block">בינה מלאכותית · קריינות בעברית</span>
+          <h1 className="hero-title font-display text-3xl font-black leading-tight text-ink sm:text-5xl">
             הפכו כל טקסט לקריינות מקצועית <span className="text-brand">תוך שניות</span>
           </h1>
           <p className="mt-4 max-w-xl text-sm text-mute sm:text-base">
@@ -50,9 +50,11 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <div className="card group relative overflow-hidden rounded-[2rem] p-6 sm:p-10">
+        <div className="wave-card card group relative overflow-hidden rounded-[2rem] p-6 sm:p-10">
           <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-3xl" />
+          <div className="wave-ribbon wave-ribbon-one" aria-hidden="true" />
+          <div className="wave-ribbon wave-ribbon-two" aria-hidden="true" />
           <div className="relative space-y-4">
             <div className="flex items-center gap-3 rounded-2xl border border-line/70 bg-bg/50 px-4 py-5 transition-transform duration-300 group-hover:scale-[1.02]">
               {[0.4, 0.9, 0.55, 1, 0.35, 0.75, 0.5].map((h, i) => (
