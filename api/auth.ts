@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { randomUUID, scryptSync, randomBytes, timingSafeEqual } from "node:crypto";
+import { randomUUID, scryptSync, randomBytes, timingSafeEqual, createHmac } from "node:crypto";
 import { getJson, putJson, profileKey } from "./lib/storage.js";
 
 const usersKey = "_system/users.json";
@@ -9,14 +9,27 @@ type Profile = { userId: string; username: string; createdAt: string; updatedAt:
 
 function send(res: VercelResponse, status: number, body: unknown) { return res.status(status).json(body); }
 function hashPassword(password: string, salt: string) { return scryptSync(password, salt, 64).toString("hex"); }
+const authSecret = process.env.VOICEMASTER_SESSION_SECRET!;
+function authToken(userId: string) {
+  const payload = Buffer.from(JSON.stringify({ userId })).toString("base64url");
+  const sig = createHmac("sha256", authSecret).update(payload).digest("hex");
+  return payload + "." + sig;
+}
 function setAuth(res: VercelResponse, userId: string) {
-  res.setHeader("Set-Cookie", "vm_auth=" + Buffer.from(JSON.stringify({ userId })).toString("base64url") + "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000");
+  res.setHeader("Set-Cookie", "vm_auth=" + authToken(userId) + "; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000");
 }
 function clearAuth(res: VercelResponse) { res.setHeader("Set-Cookie", "vm_auth=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0"); }
 function getAuth(req: VercelRequest) {
   const raw = String(req.headers.cookie || "").match(/(?:^|;\s*)vm_auth=([^;]+)/)?.[1];
   if (!raw) return null;
-  try { const parsed = JSON.parse(Buffer.from(raw, "base64url").toString()); return typeof parsed.userId === "string" ? parsed.userId : null; } catch { return null; }
+  try {
+    const [payload, sig] = raw.split(".");
+    if (!payload || !sig) return null;
+    const expected = createHmac("sha256", authSecret).update(payload).digest("hex");
+    if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString());
+    return typeof parsed.userId === "string" ? parsed.userId : null;
+  } catch { return null; }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
