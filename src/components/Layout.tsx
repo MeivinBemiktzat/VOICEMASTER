@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { Mic2, Moon, Sun, KeyRound, Menu, X, Copy, Trash2, Check, Settings, Palette, Sparkles } from "lucide-react";
+import { Mic2, Moon, Sun, KeyRound, Menu, X, Copy, Trash2, Check, Settings, Palette, Sparkles, ShieldCheck } from "lucide-react";
 import { useDarkMode } from "../hooks/useDarkMode";
 import { useAppStore } from "../lib/AppStore";
 import { useToast } from "../lib/ToastContext";
@@ -260,20 +260,25 @@ export default function Layout() {
                   aria-label="תפריט פרופיל"
                   title={user.username}
                 >
-                  {user.avatarDataUrl ? (
-                    <img src={user.avatarDataUrl} alt="" className="size-full object-cover" />
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="" className="size-full object-cover" />
                   ) : (
                     <span className="flex size-full items-center justify-center bg-brand">{user.username.slice(0, 1).toUpperCase()}</span>
                   )}
                 </button>
                 {profileOpen && (
-                  <div className="card absolute left-0 top-[calc(100%+10px)] z-50 w-48 rounded-2xl p-2 shadow-2xl">
+                  <div className="card absolute left-0 top-[calc(100%+10px)] z-50 w-52 rounded-2xl p-2 shadow-2xl">
                     <div className="border-b border-line px-3 py-2">
                       <p className="truncate text-sm font-black text-ink">{user.username}</p>
                     </div>
                     <NavLink to="/settings" onClick={() => setProfileOpen(false)} className="mt-1 block rounded-xl px-3 py-2.5 text-sm font-bold text-ink hover:bg-soft">
                       הגדרות
                     </NavLink>
+                    {user.role === "admin" && (
+                      <NavLink to="/admin" onClick={() => setProfileOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm font-bold text-ink hover:bg-soft">
+                        <ShieldCheck size={15} className="me-2 inline" />ממשק ניהול
+                      </NavLink>
+                    )}
                     <button
                       onClick={async () => { await logout(); setProfileOpen(false); }}
                       className="w-full rounded-xl px-3 py-2.5 text-right text-sm font-bold text-danger hover:bg-soft"
