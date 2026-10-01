@@ -2,7 +2,7 @@ import type { ApiCallOptions, SpeakerConfig } from "./types";
 import { prompts } from "./prompts";
 
 /** מודלים: שנו כאן אם Google מחליפה שמות. הערכים זהים לאתר המקורי. */
-export const MODEL_TEXT = "gemini-3.5-flash";
+export const MODEL_TEXT = "gemini-3.5-flash-lite";
 export const MODEL_AUDIO = "gemini-2.5-flash-preview-tts";
 
 const apiKeyCooldowns = new Map<string, number>();
