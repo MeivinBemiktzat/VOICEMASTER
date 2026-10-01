@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Sparkles, Wand2, Loader2, Inbox } from "lucide-react";
 import { useAppStore } from "../lib/AppStore";
+import { useAuth } from "../lib/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
 import { voiceCatalog } from "../lib/catalogs";
@@ -17,6 +19,8 @@ const QUICK_EDITS = [
 
 export default function Narration() {
   const store = useAppStore();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const showToast = useToast();
   const { loadingKey, run } = useAiAction();
 
@@ -95,6 +99,7 @@ export default function Narration() {
   };
 
   const generate = () => {
+    if (!user) { navigate("/register"); return; }
     const text = store.draftText.trim();
     if (!text) return showToast("הכנס טקסט לקריינות");
     const selectedStyle = store.allStyles.find((s) => s.value === store.style);
