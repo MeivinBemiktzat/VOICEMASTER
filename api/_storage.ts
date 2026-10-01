@@ -17,6 +17,8 @@ export const s3 = new S3Client({
   region: process.env.HF_S3_REGION || "us-east-1",
   endpoint: `${endpoint}/${namespace}`,
   forcePathStyle: true,
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
   credentials: { accessKeyId, secretAccessKey },
 });
 
