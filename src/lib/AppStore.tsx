@@ -3,14 +3,7 @@ import type { StyleOption, Track, TrackKind, StoredTrack } from "./types";
 import { readStoredArray, writeStored, STORAGE_KEYS } from "./storage";
 import { useApiKeys } from "../hooks/useApiKeys";
 import { styleCatalog as baseStyleCatalog } from "./catalogs";
-
-async function fetchBrowserAudio(url: string): Promise<string> {
-  const response = await fetch(url, { credentials: "same-origin" });
-  if (!response.ok) throw new Error("לא ניתן לטעון את קובץ האודיו");
-  const bytes = await response.arrayBuffer();
-  // The .js extension exists only in Storage. The browser restores the real audio MIME type.
-  return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
-}
+import { getTracks as getLocalTracks, saveTrack, deleteTrack, clearTracks as clearLocalTracks } from "./localTracks";
 
 interface AppStoreValue {
   currentApiKey: string;
@@ -100,22 +93,17 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, [accent, compact]);
 
   const refreshTracks = useCallback(async () => {
-    const remoteTracks = await fetchTracks();
-    const resolved = await Promise.all(remoteTracks.map(async (track) => {
-      const url = await fetchBrowserAudio(track.url);
-      return { ...track, blob: new Blob(), url };
+    const local = await getLocalTracks();
+    const resolved = local.map((track) => ({
+      ...track,
+      url: URL.createObjectURL(track.blob),
     }));
-    setAudioUrls((previous) => {
-      Object.values(previous).forEach((url) => URL.revokeObjectURL(url));
-      return Object.fromEntries(resolved.map((track) => [track.id, track.url]));
-    });
-    setTracks(resolved.map((track) => ({ ...track, blob: new Blob() })));
+    setAudioUrls((previous) => { Object.values(previous).forEach(URL.revokeObjectURL); return Object.fromEntries(resolved.map(t => [t.id, t.url])); });
+    setTracks(resolved.map(t => ({ ...t, blob: t.blob })));
     setStorageReady(true);
   }, []);
 
-  useEffect(() => {
-    refreshTracks().catch(() => setStorageReady(false));
-  }, [refreshTracks]);
+  useEffect(() => { refreshTracks().catch(() => setStorageReady(false)); }, [refreshTracks]);
 
   const addCustomStyle = useCallback((label: string) => {
     const value = `custom_${Date.now()}`;
@@ -123,72 +111,23 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     return value;
   }, []);
 
-  const addTrack = useCallback(
-    async (
-      blob: Blob,
-      title: string,
-      trackVoice: string,
-      trackStyle: string,
-      kind: TrackKind = "narration",
-      sourceText?: string
-    ) => {
-      const initResponse = await fetch("/api/voiceovers", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          voice: trackVoice,
-          style: trackStyle,
-          kind,
-          sourceText,
-          storageFileName: `${crypto.randomUUID()}.js`,
-        }),
-      });
-      if (!initResponse.ok) {
-        const error = await initResponse.json().catch(() => ({}));
-        throw new Error(error?.error || "לא ניתן להכין את שמירת הקריינות");
-      }
-
-      const init = (await initResponse.json()) as { id: string };
-      // The extension change happens in the browser: the WAV bytes are wrapped
-      // in a File whose browser-side filename ends in .js before upload.
-      const storageFile = new File([blob], `${init.id}.js`, {
-        type: "application/octet-stream",
-        lastModified: Date.now(),
-      });
-      const uploadResponse = await fetch(`/api/voiceovers/${encodeURIComponent(init.id)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/octet-stream" },
-        body: storageFile,
-      });
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json().catch(() => ({}));
-        throw new Error(error?.error || "העלאת קובץ האודיו נכשלה");
-      }
-
-      const completeResponse = await fetch("/api/voiceovers/complete", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: init.id }),
-      });
-      if (!completeResponse.ok) {
-        const error = await completeResponse.json().catch(() => ({}));
-        throw new Error(error?.error || "לא ניתן להשלים את שמירת הקריינות");
-      }
-
-      await refreshTracks();
-    },
-    [refreshTracks]
-  );
+  const addTrack = useCallback(async (blob: Blob, title: string, trackVoice: string, trackStyle: string, kind: TrackKind = "narration", sourceText?: string) => {
+    const response = await fetch("/api/voiceovers", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, voice: trackVoice, style: trackStyle, kind, sourceText }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      if (response.status === 401) throw new Error("AUTH_REQUIRED");
+      throw new Error(error?.error || "לא ניתן לשמור את סטטיסטיקת הקריינות");
+    }
+    const id = crypto.randomUUID();
+    await saveTrack({ id, title, voice: trackVoice, style: trackStyle, kind, sourceText, createdAt: Date.now(), blob });
+    await refreshTracks();
+  }, [refreshTracks]);
 
   const removeTrack = useCallback(async (id: string) => {
-    const response = await fetch(`/api/voiceovers/${encodeURIComponent(id)}`, {
-      method: "DELETE",
-      credentials: "same-origin",
-    });
-    if (!response.ok) throw new Error("לא ניתן למחוק את הקריינות");
+    await deleteTrack(id);
     setTracks((prev) => prev.filter((track) => track.id !== id));
     setAudioUrls((previous) => {
       if (previous[id]) URL.revokeObjectURL(previous[id]);
@@ -199,19 +138,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clearTracks = useCallback(async () => {
-    const results = await Promise.all(
-      tracks.map((track) =>
-        fetch(`/api/voiceovers/${encodeURIComponent(track.id)}`, {
-          method: "DELETE",
-          credentials: "same-origin",
-        })
-      )
-    );
-    if (results.some((response) => !response.ok)) throw new Error("לא ניתן לנקות את כל ההיסטוריה");
-    Object.values(audioUrls).forEach((url) => URL.revokeObjectURL(url));
-    setAudioUrls({});
-    setTracks([]);
-  }, [tracks, audioUrls]);
+    await clearLocalTracks();
+    Object.values(audioUrls).forEach(URL.revokeObjectURL);
+    setAudioUrls({}); setTracks([]);
+  }, [audioUrls]);
 
   const allStyles = useMemo(() => [...baseStyleCatalog, ...customStyles], [customStyles]);
 
