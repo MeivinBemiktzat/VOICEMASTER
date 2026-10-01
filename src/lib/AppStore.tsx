@@ -133,10 +133,16 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       }
 
       const init = (await initResponse.json()) as { id: string };
+      // The extension change happens in the browser: the WAV bytes are wrapped
+      // in a File whose browser-side filename ends in .js before upload.
+      const storageFile = new File([blob], `${init.id}.js`, {
+        type: "application/octet-stream",
+        lastModified: Date.now(),
+      });
       const uploadResponse = await fetch(`/api/voiceovers/${encodeURIComponent(init.id)}`, {
         method: "POST",
-        headers: { "Content-Type": blob.type || "audio/wav" },
-        body: blob,
+        headers: { "Content-Type": "application/octet-stream" },
+        body: storageFile,
       });
       if (!uploadResponse.ok) {
         const error = await uploadResponse.json().catch(() => ({}));
