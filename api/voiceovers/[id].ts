@@ -1,8 +1,28 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSession, getJson, key, removeObject } from "../lib/storage.js";
+import { getSession, getJson, key, removeObject, s3 } from "../lib/storage.js";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    if (req.method === "GET") {
+      const sessionId = getSession(req, res);
+      const id = String(req.query.id || "");
+      if (!/^[a-f0-9-]{36}$/.test(id)) return res.status(400).json({ error: "Invalid id" });
+      const metadata = await getJson<any>(key(sessionId, `voiceovers/${id}/metadata.json`));
+      if (!metadata || metadata.status !== "ready") return res.status(404).json({ error: "Voiceover not found" });
+
+      const result = await s3.send(new GetObjectCommand({
+        Bucket: process.env.HF_STORAGE_BUCKET!,
+        Key: metadata.audioKey,
+      }));
+      if (!result.Body) return res.status(404).json({ error: "Audio not found" });
+
+      res.setHeader("Content-Type", result.ContentType || "audio/wav");
+      res.setHeader("Content-Disposition", `inline; filename="${id}.wav"`);
+      if (result.ContentLength != null) res.setHeader("Content-Length", String(result.ContentLength));
+      return result.Body.pipe(res);
+    }
+
     if (req.method !== "DELETE") return res.status(405).json({ error: "Method not allowed" });
     const sessionId = getSession(req, res);
     const id = String(req.query.id || "");
