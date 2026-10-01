@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
-import { getSession, ensureProfile, getJson, key, listKeys, putJson, signedDownload, signedUpload, updateStats } from "./_storage";
+import { getSession, ensureProfile, getJson, key, listKeys, putJson, signedDownload, signedUpload, updateStats } from "./lib/storage.js";
 
 function sendError(res: VercelResponse, status: number, message: string) {
   res.status(status).json({ error: message });
