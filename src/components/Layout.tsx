@@ -195,8 +195,17 @@ function ApiKeyPopover() {
 
 export default function Layout() {
   const { isDark, toggle } = useDarkMode();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
 
   return (
     <div className="site-shell relative min-h-screen">
@@ -244,14 +253,38 @@ export default function Layout() {
 
           <div className="flex items-center gap-2 sm:gap-3">
             {user ? (
-              <NavLink to="/settings" className="flex items-center gap-2 rounded-xl border border-line bg-bg/60 px-2 py-1.5">
-                <span className="flex size-8 items-center justify-center overflow-hidden rounded-full bg-brand text-xs font-black text-onbrand">
-                  {user.avatarDataUrl ? <img src={user.avatarDataUrl} alt="" className="size-full object-cover" /> : user.username.slice(0,1).toUpperCase()}
-                </span>
-                <span className="hidden max-w-24 truncate text-xs font-bold text-ink sm:inline">{user.username}</span>
-              </NavLink>
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setProfileOpen((open) => !open)}
+                  className="flex size-10 items-center justify-center overflow-hidden rounded-xl border border-line bg-bg/60 text-sm font-black text-onbrand"
+                  aria-label="תפריט פרופיל"
+                  title={user.username}
+                >
+                  {user.avatarDataUrl ? (
+                    <img src={user.avatarDataUrl} alt="" className="size-full object-cover" />
+                  ) : (
+                    <span className="flex size-full items-center justify-center bg-brand">{user.username.slice(0, 1).toUpperCase()}</span>
+                  )}
+                </button>
+                {profileOpen && (
+                  <div className="card absolute left-0 top-[calc(100%+10px)] z-50 w-48 rounded-2xl p-2 shadow-2xl">
+                    <div className="border-b border-line px-3 py-2">
+                      <p className="truncate text-sm font-black text-ink">{user.username}</p>
+                    </div>
+                    <NavLink to="/settings" onClick={() => setProfileOpen(false)} className="mt-1 block rounded-xl px-3 py-2.5 text-sm font-bold text-ink hover:bg-soft">
+                      הגדרות
+                    </NavLink>
+                    <button
+                      onClick={async () => { await logout(); setProfileOpen(false); }}
+                      className="w-full rounded-xl px-3 py-2.5 text-right text-sm font-bold text-danger hover:bg-soft"
+                    >
+                      התנתקות
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
-              <NavLink to="/login" className="btn btn-outline !px-3 text-xs">התחברות</NavLink>
+              <NavLink to="/login" className="btn btn-outline !px-3 text-xs">הרשמה / התחברות</NavLink>
             )}
             <button
               onClick={toggle}
