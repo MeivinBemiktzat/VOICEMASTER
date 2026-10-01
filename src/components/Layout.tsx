@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { to: "/narration", label: "סטודיו קריינות" },
   { to: "/podcast", label: "סטודיו פודקאסט" },
   { to: "/history", label: "היסטוריה" },
+  { to: "/settings", label: "הגדרות" },
   { to: "/about", label: "אודות" },
 ];
 
@@ -194,7 +195,6 @@ function ApiKeyPopover() {
 export default function Layout() {
   const { isDark, toggle } = useDarkMode();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="relative min-h-screen">
@@ -242,7 +242,6 @@ export default function Layout() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button onClick={() => setSettingsOpen(true)} className="btn btn-outline !px-2.5 sm:!px-3" aria-label="פתח הגדרות" title="הגדרות האתר"><KeyRound size={18} /><span className="hidden sm:inline">הגדר מפתח</span></button>
             <button
               onClick={toggle}
               className="btn btn-outline !px-2.5 sm:!px-3"
@@ -282,8 +281,6 @@ export default function Layout() {
         )}
       </header>
 
-      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
-
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         <Outlet />
       </main>
@@ -292,7 +289,7 @@ export default function Layout() {
         <div className="card rounded-2xl p-6 text-center sm:rounded-[2rem] sm:p-7">
           <p className="text-base font-black text-ink sm:text-lg">אתר זה פותח על ידי אריה AI</p>
           <p className="mt-2 text-xs text-mute sm:text-sm">
-            הפקת קריינות ופודקאסטים בעברית באמצעות בינה מלאכותית · {new Date().getFullYear()}
+            הפקת קר��ינות ופודקאסטים בעברית באמצעות בינה מלאכותית · {new Date().getFullYear()}
           </p>
         </div>
       </footer>
