@@ -32,7 +32,7 @@ export default function Home() {
         <div>
           <span className="luxury-chip hero-kicker mb-4 inline-block">בינה מלאכותית · קריינות בעברית</span>
           <h1 className="hero-title font-display text-3xl font-black leading-tight text-ink sm:text-5xl">
-            הפכו כל טקסט לקריינות מקצועית <span className="text-brand">תוך שניות</span>
+            הפכו כל טקסט לקריינות מקצועית <span className="hero-gradient-text">תוך שניות</span>
           </h1>
           <p className="mt-4 max-w-xl text-sm text-mute sm:text-base">
             VoiceMaster Studio הוא סטודיו קריינות ופודקאסטים מבוסס בינה מלאכותית של Gemini. כתבו, ערכו,
