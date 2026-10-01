@@ -16,7 +16,7 @@ export function AuthProvider({children}:{children:ReactNode}) {
   const register=async(username:string,password:string)=>{const d=await call("register",{username,password});setUser(d.user);};
   const login=async(username:string,password:string)=>{const d=await call("login",{username,password});setUser(d.user);};
   const logout=async()=>{await call("logout");setUser(null);};
-  const uploadAvatar=async(file:File)=>{if(file.size>2_000_000) throw new Error("התמונה גדולה מדי (עד 2MB)"); const reader=new FileReader(); const data=await new Promise<string>((res,rej)=>{reader.onload=()=>res(String(reader.result));reader.onerror=()=>rej(reader.error);reader.readAsDataURL(file);}); const d=await call("avatar",{avatarDataUrl:data});setUser(d.user);};
+  const uploadAvatar=async(file:File)=>{const reader=new FileReader(); const data=await new Promise<string>((res,rej)=>{reader.onload=()=>res(String(reader.result));reader.onerror=()=>rej(reader.error);reader.readAsDataURL(file);}); const d=await call("avatar",{avatarDataUrl:data});setUser(d.user);};
   return <AuthContext.Provider value={{user,loading,register,login,logout,uploadAvatar}}>{children}</AuthContext.Provider>;
 }
 export function useAuth(){const v=useContext(AuthContext);if(!v)throw new Error("useAuth must be used inside AuthProvider");return v;}
