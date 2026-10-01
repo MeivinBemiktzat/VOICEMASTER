@@ -36,3 +36,14 @@ export interface SpeakerConfig {
   name: string;
   voice: string;
 }
+
+
+export interface StoredTrack {
+  id: string;
+  title: string;
+  voice: string;
+  style: string;
+  createdAt: number;
+  kind: TrackKind;
+  url: string;
+}
