@@ -57,16 +57,7 @@ body {
   position: relative;
   isolation: isolate;
 }
-.home-landing::before,
-.home-landing::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  z-index: -1;
-  border-radius: 999px;
-  filter: blur(1px);
-  opacity: 0.72;
-}
+
 .home-landing::before {
   width: 60%;
   height: 11rem;
@@ -156,18 +147,6 @@ html.dark .fixed-background-layer::after {
   border-color: rgb(255 255 255 / 0.16);
   color: rgb(248 250 255);
 }
-.dark .home-landing::before,
-.dark .home-landing::after { opacity: 1; filter: blur(2px); }
-.dark .home-landing::before {
-  background: linear-gradient(90deg, transparent, rgb(30 116 255 / 0.6), rgb(168 85 247 / 0.45), rgb(255 159 67 / 0.52), transparent);
-  box-shadow: 0 0 38px rgb(59 130 246 / 0.25);
-}
-.dark .home-landing::after {
-  background: linear-gradient(90deg, transparent, rgb(255 145 58 / 0.55), rgb(168 85 247 / 0.52), rgb(47 72 255 / 0.48), transparent);
-  box-shadow: 0 0 45px rgb(124 58 237 / 0.28);
-}
-
-
 .ambient-orb {
   opacity: 0.42;
   filter: blur(72px);
