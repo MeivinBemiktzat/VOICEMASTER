@@ -134,7 +134,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
       const init = (await initResponse.json()) as { id: string };
       const uploadResponse = await fetch(`/api/voiceovers/${encodeURIComponent(init.id)}`, {
-        method: "PUT",
+        method: "POST",
         headers: { "Content-Type": blob.type || "audio/wav" },
         body: blob,
       });
