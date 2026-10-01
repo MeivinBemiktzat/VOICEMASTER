@@ -28,8 +28,8 @@ const FEATURES = [
 export default function Home() {
   return (
     <div className="home-landing space-y-14 sm:space-y-20">
-      <section className="hero-section grid items-center gap-8 rounded-[2rem] lg:grid-cols-2 lg:gap-12">
-        <div>
+      <section className="hero-section flex items-center rounded-[2rem]">
+        <div className="max-w-3xl">
           <span className="luxury-chip hero-kicker mb-4 inline-block">בינה מלאכותית · קריינות בעברית</span>
           <h1 className="hero-title font-display text-3xl font-black leading-tight text-ink sm:text-5xl">
             הפכו כל טקסט לקריינות מקצועית <span className="hero-gradient-text">תוך שניות</span>
@@ -48,25 +48,6 @@ export default function Home() {
               <Podcast size={18} />
               צור פודקאסט
             </Link>
-          </div>
-        </div>
-        <div className="wave-card card group relative overflow-hidden rounded-[2rem] p-6 sm:p-10">
-          <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-3xl" />
-          <div className="wave-ribbon wave-ribbon-one" aria-hidden="true" />
-          <div className="wave-ribbon wave-ribbon-two" aria-hidden="true" />
-          <div className="relative space-y-4">
-            <div className="flex items-center gap-3 rounded-2xl border border-line/70 bg-bg/50 px-4 py-5 transition-transform duration-300 group-hover:scale-[1.02]">
-              {[0.4, 0.9, 0.55, 1, 0.35, 0.75, 0.5].map((h, i) => (
-                <span
-                  key={i}
-                  className="wave-bar w-2 rounded-full bg-gradient-to-t from-brand to-sun"
-                  style={{ height: `${h * 60 + 20}px`, animationDelay: `${i * 0.12}s` }}
-                />
-              ))}
-            </div>
-            <p className="text-sm font-bold text-ink">"ברוכים הבאים ל-VoiceMaster, הסטודיו החכם שלכם לקריינות..."</p>
-            <p className="text-xs text-mute">קול: Kore · סגנון: מקצועי</p>
           </div>
         </div>
       </section>
