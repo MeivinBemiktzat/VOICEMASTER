@@ -38,6 +38,9 @@ html {
 
 body {
   @apply bg-bg font-body text-ink antialiased;
+  background-image: radial-gradient(circle at 85% 0%, rgb(var(--brand) / 0.07), transparent 28rem),
+    radial-gradient(circle at 10% 80%, rgb(255 200 61 / 0.06), transparent 24rem);
+  background-attachment: fixed;
 }
 
 ::selection {
@@ -47,9 +50,12 @@ body {
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-colors
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200
       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg
       disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
   }
   .btn-primary {
     @apply bg-brand text-onbrand hover:brightness-110;
@@ -69,6 +75,11 @@ body {
   }
   .card {
     @apply rounded-2xl border border-line bg-surface shadow-lift;
+    transition: border-color 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+  }
+  .card:hover {
+    border-color: rgb(var(--brand) / 0.28);
+    box-shadow: 0 1px 0 rgb(var(--line) / 0.7), 0 22px 46px -28px rgb(var(--shadow) / 0.58);
   }
   .label {
     @apply mb-1.5 block text-xs font-bold text-mute;
