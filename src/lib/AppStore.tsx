@@ -78,7 +78,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const setAccent = useCallback((value: string) => {
     setAccentState(value);
     writeStored(STORAGE_KEYS.accent, value);
-  }, [user]);
+  }, []);
 
   const setCompact = useCallback((value: boolean) => {
     setCompactState(value);
@@ -103,7 +103,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setAudioUrls((previous) => { Object.values(previous).forEach(URL.revokeObjectURL); return Object.fromEntries(resolved.map(t => [t.id, t.url])); });
     setTracks(resolved.map(t => ({ ...t, blob: t.blob })));
     setStorageReady(true);
-  }, []);
+  }, [user]);
 
   useEffect(() => { refreshTracks().catch(() => setStorageReady(false)); }, [refreshTracks]);
 
@@ -126,7 +126,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     const id = crypto.randomUUID();
     await saveTrack({ ownerId: user?.userId || "", id, title, voice: trackVoice, style: trackStyle, kind, sourceText, createdAt: Date.now(), blob });
     await refreshTracks();
-  }, [refreshTracks]);
+  }, [refreshTracks, user]);
 
   const removeTrack = useCallback(async (id: string) => {
     if (user) await deleteTrack(user.userId, id);
@@ -137,13 +137,13 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       delete next[id];
       return next;
     });
-  }, []);
+  }, [user]);
 
   const clearTracks = useCallback(async () => {
     if (user) await clearLocalTracks(user.userId);
     Object.values(audioUrls).forEach(URL.revokeObjectURL);
     setAudioUrls({}); setTracks([]);
-  }, [audioUrls]);
+  }, [audioUrls, user]);
 
   const allStyles = useMemo(() => [...baseStyleCatalog, ...customStyles], [customStyles]);
 
