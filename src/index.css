@@ -87,6 +87,11 @@ body {
   transform: rotate(8deg);
   background: linear-gradient(90deg, transparent, rgb(245 149 64 / 0.22), rgb(83 50 229 / 0.2), transparent);
 }
+.hero-section {
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease, background-image 0.3s ease;
+}
 .hero-title {
   letter-spacing: -0.045em;
 }
@@ -131,6 +136,36 @@ body {
 .wave-ribbon-one { bottom: -4rem; }
 .wave-ribbon-two { bottom: -5.6rem; opacity: 0.62; transform: rotate(-7deg) translateX(2rem); }
 
+.dark .hero-section {
+  background-image: url('/hero-dark.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: background 0.3s ease;
+}
+.dark .hero-section::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(8 11 21 / 0.08), rgb(8 11 21 / 0.16));
+}
+.dark .hero-section > * {
+  position: relative;
+  z-index: 1;
+}
+.dark .hero-section .wave-card {
+  background: rgb(15 23 42 / 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgb(255 255 255 / 0.1);
+}
+.dark .hero-section .hero-kicker,
+.dark .hero-section p,
+.dark .hero-section .text-mute,
+.dark .hero-section .text-ink {
+  color: rgb(255 255 255);
+}
 .dark body {
   background-image:
     radial-gradient(ellipse 42rem 18rem at 5% 18%, rgb(255 132 45 / 0.24), transparent 68%),
