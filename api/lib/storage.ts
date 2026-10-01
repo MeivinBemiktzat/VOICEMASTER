@@ -67,7 +67,11 @@ export async function requireUser(req: any) {
   const raw = cookies.match(/(?:^|;\\s*)vm_auth=([^;]+)/)?.[1];
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(Buffer.from(raw, "base64url").toString());
+    const [payload, sig] = raw.split(".");
+    if (!payload || !sig) return null;
+    const expected = createHmac("sha256", secret!).update(payload).digest("hex");
+    if (sig.length !== expected.length || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString());
     if (typeof parsed.userId !== "string") return null;
     return await getJson<any>(profileKey(parsed.userId));
   } catch { return null; }
