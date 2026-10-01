@@ -6,6 +6,7 @@ import Podcast from "./pages/Podcast";
 import History from "./pages/History";
 import About from "./pages/About";
 import Settings from "./pages/Settings";
+import AuthPage from "./pages/Auth";
 
 export default function App() {
   return (
@@ -16,6 +17,8 @@ export default function App() {
         <Route path="/podcast" element={<Podcast />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/register" element={<AuthPage mode="register" />} />
         <Route path="/about" element={<About />} />
         <Route path="*" element={<Home />} />
       </Route>
