@@ -105,7 +105,7 @@ export default function Narration() {
       ({ blob }) => {
         store.addTrack(blob, text.slice(0, 30), store.voice, store.style, "narration", text)
           .then(() => showToast("קריינות הופקה ונשמרה בהצלחה!", "success"))
-          .catch(() => showToast("הקריינות הופקה, אך השמירה למסד הנתונים נכשלה"));
+          .catch((error) => showToast(`הקריינות הופקה, אך השמירה נכשלה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`));
       }
     );
   };
