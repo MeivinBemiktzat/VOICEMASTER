@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
-import { getSession, ensureProfile, getJson, key, listKeys, putJson, updateStats } from "./lib/storage.js";
+import { requireUser, updateStats } from "./lib/storage.js";
 
 function sendError(res: VercelResponse, status: number, message: string) {
   res.status(status).json({ error: message });
@@ -16,54 +16,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   log("request_start", { url: req.url });
 
   try {
-    const sessionId = getSession(req, res);
-    log("session_resolved", { sessionIdPrefix: sessionId.slice(0, 8) });
-    const created = await ensureProfile(sessionId);
-    if (created) { log("new_profile_created"); await updateStats({ users: 1 }); }
-
-    if (req.method === "GET") {
-      const keys = await listKeys(key(sessionId, "voiceovers/"));
-      const tracks = [];
-      for (const objectKey of keys.filter((k) => k.endsWith("/metadata.json"))) {
-        const meta = await getJson<any>(objectKey);
-        if (!meta || meta.status !== "ready") continue;
-        tracks.push({
-          id: meta.id,
-          title: meta.title,
-          voice: meta.voice,
-          style: meta.style,
-          createdAt: meta.createdAt,
-          kind: meta.kind,
-          url: `/api/voiceovers/${meta.id}`,
-        });
-      }
-      tracks.sort((a, b) => b.createdAt - a.createdAt);
-      log("history_loaded", { count: tracks.length });
-      return res.status(200).json({ tracks });
-    }
+    const user = await requireUser(req);
+    if (!user) return sendError(res, 401, "יש להתחבר כדי ליצור קריינות");
 
     if (req.method === "POST") {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
-      const title = String(body.title || "").trim();
-      const voice = String(body.voice || "").trim();
-      const style = String(body.style || "").trim();
-      const kind = body.kind === "podcast" ? "podcast" : "narration";
-      const sourceText = typeof body.sourceText === "string" ? body.sourceText.slice(0, 20000) : undefined;
-      const storageFileName = String(body.storageFileName || "");
-      if (!title || !voice || !style) return sendError(res, 400, "Missing track metadata");
-      if (!/^[a-f0-9-]{36}\.js$/.test(storageFileName)) { log("invalid_storage_filename", { storageFileName }); return sendError(res, 400, "Invalid storage filename"); }
-
-      const id = randomUUID();
-      const audioKey = key(sessionId, `voiceovers/${id}/${storageFileName}`);
-      const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
-      log("creating_voiceover", { id, audioKey, metadataKey, title, voice, style, kind, sourceTextLength: sourceText?.length || 0 });
-      await putJson(metadataKey, {
-        id, title, voice, style, kind, sourceText,
-        createdAt: Date.now(), audioKey,
-        status: "uploading",
-      });
-      log("voiceover_initialized", { id, metadataKey });
-      return res.status(201).json({ id });
+      const sourceText = typeof body.sourceText === "string" ? body.sourceText : "";
+      const chars = sourceText.length;
+      log("voiceover_authorized", { userId: user.userId, username: user.username, characters: chars });
+      await updateStats({ voiceoversCreated: 1, totalCharacters: chars });
+      return res.status(200).json({ ok: true, user: { userId: user.userId, username: user.username } });
     }
 
     return sendError(res, 405, "Method not allowed");
