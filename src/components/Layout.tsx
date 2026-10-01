@@ -287,6 +287,7 @@ export default function Layout() {
       <footer className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6">
         <div className="card rounded-2xl p-6 text-center sm:rounded-[2rem] sm:p-7">
           <p className="text-base font-black text-ink sm:text-lg">אתר זה פותח על ידי אריה AI</p>
+
           <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-bold sm:text-sm">
             <a className="text-brand transition-colors hover:text-ink" href="https://mitmachim.top/user/%D7%90%D7%A8%D7%99%D7%94-ai" target="_blank" rel="noreferrer">
               אריה AI במתמחים טופ
@@ -296,7 +297,8 @@ export default function Layout() {
               אריה AI בפורום ימות
             </a>
           </div>
-          <div className="mt-4 border-t border-line pt-4">
+
+          <div className="mt-5">
             <p className="text-sm font-black text-ink">אריה AI זמין גם במייל</p>
             <p className="mt-1 text-xs font-bold text-mute">
               ניתן ליצור קשר עם אריה AI בכתובת <a className="text-brand transition-colors hover:text-ink" href="mailto:a0733641352@gmail.com">a0733641352@gmail.com</a>
