@@ -4,6 +4,14 @@ import { readStoredArray, writeStored, STORAGE_KEYS } from "./storage";
 import { useApiKeys } from "../hooks/useApiKeys";
 import { styleCatalog as baseStyleCatalog } from "./catalogs";
 
+async function fetchBrowserAudio(url: string): Promise<string> {
+  const response = await fetch(url, { credentials: "same-origin" });
+  if (!response.ok) throw new Error("לא ניתן לטעון את קובץ האודיו");
+  const bytes = await response.arrayBuffer();
+  // The .js extension exists only in Storage. The browser restores the real audio MIME type.
+  return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+}
+
 interface AppStoreValue {
   currentApiKey: string;
   savedApiKeys: string[];
@@ -60,6 +68,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [voice, setVoice] = useState("Zephyr");
   const [style, setStyle] = useState("professional");
   const [storageReady, setStorageReady] = useState(false);
+  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   const [accent, setAccentState] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.accent);
@@ -92,7 +101,15 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const refreshTracks = useCallback(async () => {
     const remoteTracks = await fetchTracks();
-    setTracks(remoteTracks.map((track) => ({ ...track, blob: new Blob() })));
+    const resolved = await Promise.all(remoteTracks.map(async (track) => {
+      const url = await fetchBrowserAudio(track.url);
+      return { ...track, blob: new Blob(), url };
+    }));
+    setAudioUrls((previous) => {
+      Object.values(previous).forEach((url) => URL.revokeObjectURL(url));
+      return Object.fromEntries(resolved.map((track) => [track.id, track.url]));
+    });
+    setTracks(resolved.map((track) => ({ ...track, blob: new Blob() })));
     setStorageReady(true);
   }, []);
 
@@ -172,6 +189,12 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     });
     if (!response.ok) throw new Error("לא ניתן למחוק את הקריינות");
     setTracks((prev) => prev.filter((track) => track.id !== id));
+    setAudioUrls((previous) => {
+      if (previous[id]) URL.revokeObjectURL(previous[id]);
+      const next = { ...previous };
+      delete next[id];
+      return next;
+    });
   }, []);
 
   const clearTracks = useCallback(async () => {
@@ -184,8 +207,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       )
     );
     if (results.some((response) => !response.ok)) throw new Error("לא ניתן לנקות את כל ההיסטוריה");
+    Object.values(audioUrls).forEach((url) => URL.revokeObjectURL(url));
+    setAudioUrls({});
     setTracks([]);
-  }, [tracks]);
+  }, [tracks, audioUrls]);
 
   const allStyles = useMemo(() => [...baseStyleCatalog, ...customStyles], [customStyles]);
 
@@ -204,7 +229,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setAccent,
     compact,
     setCompact,
-    tracks,
+    tracks: tracks.map((track) => ({ ...track, url: audioUrls[track.id] || track.url })),
     addTrack,
     removeTrack,
     clearTracks,
