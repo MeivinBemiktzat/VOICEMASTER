@@ -142,6 +142,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
           style: trackStyle,
           kind,
           sourceText,
+          storageFileName: `${crypto.randomUUID()}.js`,
         }),
       });
       if (!initResponse.ok) {
