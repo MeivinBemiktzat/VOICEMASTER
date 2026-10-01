@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Loader2, Podcast as PodcastIcon, Inbox } from "lucide-react";
 import { useAppStore } from "../lib/AppStore";
+import { useAuth } from "../lib/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
 import { voiceCatalog } from "../lib/catalogs";
@@ -16,6 +18,8 @@ const LENGTH_OPTIONS = [
 
 export default function Podcast() {
   const store = useAppStore();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const showToast = useToast();
   const { loadingKey, run } = useAiAction();
 
