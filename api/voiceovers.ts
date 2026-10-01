@@ -7,10 +7,19 @@ function sendError(res: VercelResponse, status: number, message: string) {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  const log = (message: string, data: Record<string, unknown> = {}) =>
+    console.log("[VoiceMaster][voiceovers]", JSON.stringify({
+      requestId, method: req.method, message, ...data, elapsedMs: Date.now() - startedAt
+    }));
+  log("request_start", { url: req.url });
+
   try {
     const sessionId = getSession(req, res);
+    log("session_resolved", { sessionIdPrefix: sessionId.slice(0, 8) });
     const created = await ensureProfile(sessionId);
-    if (created) await updateStats({ users: 1 });
+    if (created) { log("new_profile_created"); await updateStats({ users: 1 }); }
 
     if (req.method === "GET") {
       const keys = await listKeys(key(sessionId, "voiceovers/"));
@@ -29,6 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
       tracks.sort((a, b) => b.createdAt - a.createdAt);
+      log("history_loaded", { count: tracks.length });
       return res.status(200).json({ tracks });
     }
 
@@ -44,17 +54,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const id = randomUUID();
       const audioKey = key(sessionId, `voiceovers/${id}/audio.wav`);
       const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
+      log("creating_voiceover", { id, audioKey, metadataKey, title, voice, style, kind, sourceTextLength: sourceText?.length || 0 });
       await putJson(metadataKey, {
         id, title, voice, style, kind, sourceText,
         createdAt: Date.now(), audioKey,
         status: "uploading",
       });
+      log("voiceover_initialized", { id, metadataKey });
       return res.status(201).json({ id });
     }
 
     return sendError(res, 405, "Method not allowed");
   } catch (error: any) {
-    console.error(error);
+    console.error("[VoiceMaster][voiceovers][ERROR]", JSON.stringify({ requestId, method: req.method, url: req.url, message: error?.message, name: error?.name, stack: error?.stack }));
     return sendError(res, 500, error?.message || "Storage error");
   }
 }
