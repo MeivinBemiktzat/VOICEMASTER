@@ -50,11 +50,11 @@ export default function Home() {
             </Link>
           </div>
         </div>
-        <div className="card relative overflow-hidden rounded-[2rem] p-6 sm:p-10">
+        <div className="card group relative overflow-hidden rounded-[2rem] p-6 sm:p-10">
           <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-3xl" />
           <div className="relative space-y-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-line/70 bg-bg/50 px-4 py-5 transition-transform duration-300 group-hover:scale-[1.02]">
               {[0.4, 0.9, 0.55, 1, 0.35, 0.75, 0.5].map((h, i) => (
                 <span
                   key={i}
@@ -75,7 +75,7 @@ export default function Home() {
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
-            <div key={f.title} className="card rounded-2xl p-5 sm:p-6">
+            <div key={f.title} className="card rounded-2xl p-5 transition-transform duration-200 hover:-translate-y-1 sm:p-6">
               <div className="mb-3 inline-flex rounded-xl bg-brand/10 p-2.5 text-brand">
                 <f.icon size={22} />
               </div>

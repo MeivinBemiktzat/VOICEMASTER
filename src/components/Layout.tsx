@@ -139,7 +139,7 @@ export default function Layout() {
         <div className="absolute -left-16 bottom-10 h-72 w-72 rounded-full bg-sun/10 blur-[100px]" />
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-line bg-bg/75 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <NavLink to="/" className="flex items-center gap-2.5 sm:gap-3">
             <div className="rounded-2xl bg-gradient-to-br from-brand via-violet-500 to-sun p-2 text-white shadow-lg ring-8 ring-brand/10 sm:p-2.5">
