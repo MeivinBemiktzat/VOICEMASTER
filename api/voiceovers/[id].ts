@@ -55,9 +55,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.statusCode = range && result.ContentRange ? 206 : 200;
       res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Content-Type", result.ContentType || "audio/wav");
-      res.setHeader("Content-Disposition", req.query.download === "1"
-        ? `attachment; filename="${id}.wav"`
-        : `inline; filename="${id}.wav"`);
       if (result.ContentRange) res.setHeader("Content-Range", result.ContentRange);
       if (result.ContentLength != null) res.setHeader("Content-Length", String(result.ContentLength));
       log("playback_stream_start", { audioKey: metadata.audioKey, contentLength: result.ContentLength, contentRange: result.ContentRange });
