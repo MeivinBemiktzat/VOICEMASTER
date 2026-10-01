@@ -129,8 +129,8 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
       });
       if (!initResponse.ok) throw new Error("לא ניתן להכין את שמירת הקריינות");
 
-      const init = (await initResponse.json()) as { id: string; uploadUrl: string };
-      const uploadResponse = await fetch(init.uploadUrl, {
+      const init = (await initResponse.json()) as { id: string };
+      const uploadResponse = await fetch(`/api/voiceovers/${encodeURIComponent(init.id)}`, {
         method: "PUT",
         headers: { "Content-Type": blob.type || "audio/wav" },
         body: blob,
