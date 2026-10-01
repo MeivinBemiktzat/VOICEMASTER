@@ -103,8 +103,9 @@ export default function Narration() {
       "generate",
       () => geminiAudioCall(text, styleInstruction, store.voice, apiOpts),
       ({ blob }) => {
-        store.addTrack(blob, text.slice(0, 30), store.voice, store.style, "narration");
-        showToast("קריינות הופקה בהצלחה!", "success");
+        store.addTrack(blob, text.slice(0, 30), store.voice, store.style, "narration", text)
+          .then(() => showToast("קריינות הופקה ונשמרה בהצלחה!", "success"))
+          .catch(() => showToast("הקריינות הופקה, אך השמירה למסד הנתונים נכשלה"));
       }
     );
   };
