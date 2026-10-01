@@ -28,7 +28,7 @@ const FEATURES = [
 export default function Home() {
   return (
     <div className="home-landing space-y-14 sm:space-y-20">
-      <section className="hero-section grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
+      <section className="hero-section grid items-center gap-8 rounded-[2rem] lg:grid-cols-2 lg:gap-12">
         <div>
           <span className="luxury-chip hero-kicker mb-4 inline-block">בינה מלאכותית · קריינות בעברית</span>
           <h1 className="hero-title font-display text-3xl font-black leading-tight text-ink sm:text-5xl">
