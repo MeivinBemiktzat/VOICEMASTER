@@ -11,7 +11,7 @@ export default function History() {
         <div>
           <h1 className="font-display text-2xl font-black text-ink sm:text-3xl">היסטוריית הפקות</h1>
           <p className="mt-1 text-xs text-mute sm:text-sm">
-            כל הקריינות והפודקאסטים שיצרתם בסשן הנוכחי ({store.tracks.length} הקלטות)
+            כל הקריינות והפודקאסטים ששמרתם בחשבון הדפדפן ({store.tracks.length} הקלטות)
           </p>
         </div>
         {store.tracks.length > 0 && (
