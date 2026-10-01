@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { LogIn, UserPlus } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
@@ -7,6 +7,6 @@ import { useToast } from "../lib/ToastContext";
 export default function AuthPage({ mode = "login" }: { mode?: "login"|"register" }) {
   const [register,setRegister]=useState(mode==="register"); const [username,setUsername]=useState(""); const [password,setPassword]=useState(""); const [busy,setBusy]=useState(false);
   const {login}=useAuth(); const auth=useAuth(); const toast=useToast(); const navigate=useNavigate();
-  const submit=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);try{if(register) await auth.register(username,password);else await login(username,password);toast(register?"ההרשמה הצליחה":"התחברת בהצלחה","success");navigate("/");}catch(e){toast(e instanceof Error?e.message:"שגיאה");}finally{setBusy(false);}};
+  const submit=async(e:FormEvent)=>{e.preventDefault();setBusy(true);try{if(register) await auth.register(username,password);else await login(username,password);toast(register?"ההרשמה הצליחה":"התחברת בהצלחה","success");navigate("/");}catch(e){toast(e instanceof Error?e.message:"שגיאה");}finally{setBusy(false);}};
   return <section className="mx-auto max-w-md py-10"><div className="card rounded-[2rem] p-7 sm:p-9"><div className="mb-6 text-center"><div className="mx-auto mb-3 flex size-16 items-center justify-center rounded-full bg-brand text-2xl font-black text-onbrand">{register?"הרשמה":"כניסה"}</div><h1 className="font-display text-2xl font-black text-ink">{register?"יצירת חשבון":"התחברות"}</h1><p className="mt-2 text-sm text-mute">{register?"צרו חשבון כדי ליצור קריינויות":"הכניסו את פרטי החשבון שלכם"}</p></div><form onSubmit={submit} className="space-y-4"><input required minLength={3} value={username} onChange={e=>setUsername(e.target.value)} className="field w-full" placeholder="שם משתמש"/><input required minLength={6} type="password" value={password} onChange={e=>setPassword(e.target.value)} className="field w-full" placeholder="סיסמה"/><button disabled={busy} className="btn btn-primary w-full">{register?<UserPlus size={17}/>:<LogIn size={17}/>} {register?"הרשמה":"התחברות"}</button></form><button onClick={()=>setRegister(!register)} className="mt-5 w-full text-center text-xs font-bold text-brand">{register?"כבר יש לי חשבון — להתחברות":"אין לי חשבון — להרשמה"}</button><Link to="/" className="mt-3 block text-center text-xs text-mute">חזרה לבית</Link></div></section>;
 }
