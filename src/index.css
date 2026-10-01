@@ -90,23 +90,11 @@ body {
 .hero-title {
   letter-spacing: -0.045em;
 }
-.wave-card {
-  min-height: 21rem;
-  background: rgb(255 255 255 / 0.70);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgb(255 255 255 / 0.8);
-  box-shadow: 0 24px 70px -35px rgb(39 42 140 / 0.48);
-}
 .hero-gradient-text {
   background: linear-gradient(100deg, rgb(65 90 245), rgb(124 58 237) 55%, rgb(217 70 239));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-.wave-card .wave-bar {
-  background: linear-gradient(to bottom, #ffbd3f 0%, #f59e45 26%, #9b5cf6 68%, #4038d9 100%);
-  box-shadow: 0 0 12px rgb(139 92 246 / 0.3);
 }
 .btn-primary {
   background: linear-gradient(110deg, #7c3aed 0%, #d946ef 52%, #4f46e5 100%);
@@ -117,20 +105,6 @@ body {
   filter: brightness(1.12);
   box-shadow: 0 0 32px rgb(217 70 239 / 0.5);
 }
-.wave-ribbon {
-  position: absolute;
-  pointer-events: none;
-  width: 130%;
-  height: 7rem;
-  left: -16%;
-  border-radius: 50%;
-  border-top: 2px solid rgb(82 74 231 / 0.35);
-  box-shadow: 0 -10px 0 -8px rgb(246 153 64 / 0.38), 0 -20px 0 -16px rgb(63 102 248 / 0.28);
-  transform: rotate(-7deg);
-}
-.wave-ribbon-one { bottom: -4rem; }
-.wave-ribbon-two { bottom: -5.6rem; opacity: 0.62; transform: rotate(-7deg) translateX(2rem); }
-
 .fixed-background-layer {
   position: fixed;
   inset: 0;
@@ -158,12 +132,6 @@ html.dark .fixed-background-layer::after {
   position: relative;
   z-index: 1;
 }
-.dark .hero-section .wave-card {
-  background: rgb(15 23 42 / 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-color: rgb(255 255 255 / 0.1);
-}
 .dark .hero-section .hero-kicker,
 .dark .hero-section p,
 .dark .hero-section .text-mute,
@@ -177,13 +145,6 @@ html.dark .fixed-background-layer::after {
   -webkit-backdrop-filter: blur(12px);
   border-color: rgb(255 255 255 / 0.1);
   box-shadow: 0 24px 80px -38px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.05);
-}
-.dark .wave-card {
-  box-shadow: 0 24px 80px -38px rgb(0 0 0 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.06);
-}
-.dark .wave-card .relative > div:first-child {
-  background: rgb(255 255 255 / 0.035);
-  border-color: rgb(255 255 255 / 0.1);
 }
 .dark .hero-gradient-text {
   background: linear-gradient(100deg, #6385ff, #a855f7 55%, #d946ef);
