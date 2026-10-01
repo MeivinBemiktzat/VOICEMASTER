@@ -24,6 +24,10 @@ interface AppStoreValue {
   setVoice: (voice: string) => void;
   style: string;
   setStyle: (style: string) => void;
+  accent: string;
+  setAccent: (accent: string) => void;
+  compact: boolean;
+  setCompact: (compact: boolean) => void;
 
   // הקלטות (נשמרות בזיכרון בלבד, עד רענון הדף)
   tracks: Track[];
@@ -43,10 +47,35 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
   const [draftText, setDraftText] = useState("");
   const [voice, setVoice] = useState("Zephyr");
   const [style, setStyle] = useState("professional");
+  const [accent, setAccentState] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.accent);
+      const parsed = stored ? JSON.parse(stored) : "blue";
+      return typeof parsed === "string" ? parsed : "blue";
+    } catch {
+      return "blue";
+    }
+  });
+  const [compact, setCompactState] = useState(() => localStorage.getItem(STORAGE_KEYS.compact) === "true");
+
+  const setAccent = useCallback((value: string) => {
+    setAccentState(value);
+    writeStored(STORAGE_KEYS.accent, value);
+  }, []);
+
+  const setCompact = useCallback((value: boolean) => {
+    setCompactState(value);
+    writeStored(STORAGE_KEYS.compact, value);
+  }, []);
 
   useEffect(() => {
     writeStored(STORAGE_KEYS.customStyles, customStyles);
   }, [customStyles]);
+
+  useEffect(() => {
+    document.documentElement.dataset.accent = accent;
+    document.documentElement.classList.toggle("compact", compact);
+  }, [accent, compact]);
 
   const addCustomStyle = useCallback((label: string) => {
     const value = `custom_${Date.now()}`;
@@ -99,6 +128,10 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
     setVoice,
     style,
     setStyle,
+    accent,
+    setAccent,
+    compact,
+    setCompact,
     tracks,
     addTrack,
     removeTrack,
