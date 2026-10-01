@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSession, ensureProfile, key, listKeys, putJson, signedDownload, signedUpload, updateStats } from "./_storage";
+import { getSession, ensureProfile, getJson, key, listKeys, putJson, signedDownload, signedUpload, updateStats } from "./_storage";
 
 function sendError(res: VercelResponse, status: number, message: string) {
   res.status(status).json({ error: message });
@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const keys = await listKeys(key(sessionId, "voiceovers/"));
       const tracks = [];
       for (const objectKey of keys.filter((k) => k.endsWith("/metadata.json"))) {
-        const meta = await import("./_storage").then((m) => m.getJson<any>(objectKey));
+        const meta = await getJson<any>(objectKey);
         if (!meta) continue;
         tracks.push({
           id: meta.id,
@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const sourceText = typeof body.sourceText === "string" ? body.sourceText.slice(0, 20000) : undefined;
       if (!title || !voice || !style) return sendError(res, 400, "Missing track metadata");
 
-      const id = crypto.randomUUID();
+      const id = globalThis.crypto?.randomUUID?.() || require("node:crypto").randomUUID();
       const audioKey = key(sessionId, `voiceovers/${id}/audio.wav`);
       const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
       await putJson(metadataKey, {
