@@ -1,17 +1,16 @@
 import { useEffect,useState } from "react";
 import { ShieldCheck, Users, Mic2, Type, RefreshCw } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 
 type AdminUser={userId:string;username:string;role:"user"|"admin";createdAt:string};
 type Stats=Record<string,any>;
 
 export default function Admin(){
- const {user,loading}=useAuth(); const navigate=useNavigate(); const toast=useToast();
+ const {user,loading}=useAuth(); const toast=useToast();
  const [users,setUsers]=useState<AdminUser[]>([]); const [stats,setStats]=useState<Stats>({}); const [busy,setBusy]=useState(true);
  const load=async()=>{setBusy(true);try{const r=await fetch("/api/admin",{credentials:"same-origin"});const d=await r.json().catch(()=>({}));if(r.status===403){toast("אין לך גישה לממשק הניהול");return;}if(!r.ok)throw new Error(d.error||"לא ניתן לטעון את ממשק הניהול");setUsers(d.users||[]);setStats(d.stats||{});}catch(e){toast(e instanceof Error?e.message:"שגיאה");}finally{setBusy(false);}};
- useEffect(()=>{if(!loading&&!user){toast("יש להתחבר כדי להיכנס לניהול");navigate("/login");return;}if(!loading&&user&&!user.role?.includes("admin")){toast("אין לך גישה לממשק הניהול");navigate("/");return;}if(user?.role==="admin")load();},[loading,user]);
+ useEffect(()=>{if(!loading&&user?.role==="admin")load();},[loading,user]);
  const setRole=async(u:AdminUser,role:"user"|"admin")=>{try{const r=await fetch("/api/admin",{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId:u.userId,role})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"לא ניתן לשנות הרשאה");setUsers(prev=>prev.map(x=>x.userId===u.userId?{...x,role}:x));toast("הרשאת המשתמש עודכנה","success");}catch(e){toast(e instanceof Error?e.message:"שגיאה");}};
  if(loading||busy)return <section className="mx-auto max-w-5xl py-16 text-center text-mute">טוען ממשק ניהול...</section>;
  if(!user||user.role!=="admin")return <section className="mx-auto max-w-xl py-16 text-center"><div className="card rounded-[2rem] p-8"><ShieldCheck className="mx-auto mb-4 text-danger" size={42}/><h1 className="font-display text-2xl font-black text-ink">אין לך גישה לממשק הניהול</h1><p className="mt-2 text-sm text-mute">העמוד הזה זמין למנהלי האתר בלבד.</p></div></section>;
