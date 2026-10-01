@@ -9,8 +9,16 @@ const secret = process.env.VOICEMASTER_SESSION_SECRET;
 const accessKeyId = process.env.HF_S3_ACCESS_KEY_ID;
 const secretAccessKey = process.env.HF_S3_SECRET_ACCESS_KEY;
 
-if (!namespace || !bucket || !secret || !accessKeyId || !secretAccessKey) {
-  throw new Error("Missing Hugging Face/Vercel storage environment variables");
+const missing = [
+  ["HF_STORAGE_NAMESPACE", namespace],
+  ["HF_STORAGE_BUCKET", bucket],
+  ["VOICEMASTER_SESSION_SECRET", secret],
+  ["HF_S3_ACCESS_KEY_ID", accessKeyId],
+  ["HF_S3_SECRET_ACCESS_KEY", secretAccessKey],
+].filter(([, value]) => !value).map(([name]) => name);
+
+if (missing.length) {
+  throw new Error(`Missing environment variables: ${missing.join(", ")}`);
 }
 
 export const s3 = new S3Client({
