@@ -3,7 +3,6 @@ import { randomUUID, scryptSync, randomBytes, timingSafeEqual, createHmac } from
 import { getJson, putJson, profileKey } from "./lib/storage.js";
 
 const usersKey = "_system/users.json";
-const maxImageBytes = 2_000_000;
 type UserIndex = Record<string, { userId: string; salt: string; hash: string }>;
 type Profile = { userId: string; username: string; createdAt: string; updatedAt: string; avatarDataUrl?: string };
 
@@ -82,8 +81,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
       const avatarDataUrl = String(body.avatarDataUrl || "");
       if (!/^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/.test(avatarDataUrl)) return send(res, 400, { error: "תמונת פרופיל לא תקינה" });
-      const base64 = avatarDataUrl.split(",", 2)[1] || "";
-      if (Buffer.byteLength(base64, "base64") > maxImageBytes) return send(res, 400, { error: "תמונת הפרופיל גדולה מדי (עד 2MB)" });
       const updated = { ...profile, avatarDataUrl, updatedAt: new Date().toISOString() };
       await putJson(profileKey(userId), updated);
       return send(res, 200, { user: { userId, username: updated.username, avatarDataUrl } });
