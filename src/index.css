@@ -49,12 +49,8 @@ html {
 }
 
 body {
-  @apply bg-bg font-body text-ink antialiased;
+  @apply bg-transparent font-body text-ink antialiased;
   overflow-x: hidden;
-  background-image: radial-gradient(circle at 78% 4%, rgb(77 71 232 / 0.13), transparent 27rem),
-    radial-gradient(circle at 7% 76%, rgb(246 157 66 / 0.13), transparent 25rem),
-    linear-gradient(135deg, rgb(247 247 255) 0%, rgb(235 237 255 / 0.72) 48%, rgb(255 250 244) 100%);
-  background-attachment: fixed;
 }
 
 .home-landing {
@@ -90,7 +86,6 @@ body {
 .hero-section {
   position: relative;
   overflow: hidden;
-  transition: background 0.3s ease, background-image 0.3s ease;
 }
 .hero-title {
   letter-spacing: -0.045em;
@@ -136,19 +131,28 @@ body {
 .wave-ribbon-one { bottom: -4rem; }
 .wave-ribbon-two { bottom: -5.6rem; opacity: 0.62; transform: rotate(-7deg) translateX(2rem); }
 
-.dark .hero-section {
-  background-image: url('/hero-dark.webp');
+.fixed-background-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -20;
+  pointer-events: none;
+  background-image: url('/hero-light.webp');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transition: background 0.3s ease;
+  transition: background-image 0.3s ease, opacity 0.3s ease;
 }
-.dark .hero-section::before {
+.fixed-background-layer::after {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgb(8 11 21 / 0.08), rgb(8 11 21 / 0.16));
+  background: rgb(255 255 255 / 0.16);
+}
+html.dark .fixed-background-layer {
+  background-image: url('/hero-dark.webp');
+}
+html.dark .fixed-background-layer::after {
+  background: rgb(8 11 21 / 0.08);
 }
 .dark .hero-section > * {
   position: relative;
@@ -166,18 +170,15 @@ body {
 .dark .hero-section .text-ink {
   color: rgb(255 255 255);
 }
-.dark body {
-  background-image:
-    radial-gradient(ellipse 42rem 18rem at 5% 18%, rgb(255 132 45 / 0.24), transparent 68%),
-    radial-gradient(ellipse 42rem 22rem at 96% 28%, rgb(55 73 255 / 0.3), transparent 68%),
-    radial-gradient(ellipse 55rem 20rem at 30% 100%, rgb(119 43 255 / 0.3), transparent 70%),
-    linear-gradient(135deg, #080b15 0%, #0a0d22 52%, #080b15 100%);
+
+.dark .card {
+  background: rgb(15 23 42 / 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow: 0 24px 80px -38px rgb(0 0 0 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.05);
 }
 .dark .wave-card {
-  background: rgb(255 255 255 / 0.03);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-color: rgb(255 255 255 / 0.1);
   box-shadow: 0 24px 80px -38px rgb(0 0 0 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.06);
 }
 .dark .wave-card .relative > div:first-child {

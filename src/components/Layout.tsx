@@ -197,7 +197,8 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen">
+    <div className="site-shell relative min-h-screen">
+      <div className="fixed-background-layer" aria-hidden="true" />
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
         <div className="ambient-orb orb-blue absolute -right-24 -top-20 size-[28rem] rounded-full" />
         <div className="ambient-orb orb-violet absolute left-[18%] top-[28%] size-72 rounded-full" />
