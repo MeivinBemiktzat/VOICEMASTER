@@ -45,15 +45,81 @@ html.compact main { padding-top: 1.25rem; padding-bottom: 1.25rem; }
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
   @apply bg-bg font-body text-ink antialiased;
-  background-image: radial-gradient(circle at 85% 0%, rgb(var(--brand) / 0.08), transparent 30rem),
-    radial-gradient(circle at 10% 80%, rgb(255 200 61 / 0.08), transparent 26rem),
-    linear-gradient(135deg, rgb(var(--bg)) 0%, rgb(var(--soft) / 0.32) 48%, rgb(var(--bg)) 100%);
+  overflow-x: hidden;
+  background-image: radial-gradient(circle at 78% 4%, rgb(77 71 232 / 0.13), transparent 27rem),
+    radial-gradient(circle at 7% 76%, rgb(246 157 66 / 0.13), transparent 25rem),
+    linear-gradient(135deg, rgb(247 247 255) 0%, rgb(235 237 255 / 0.72) 48%, rgb(255 250 244) 100%);
   background-attachment: fixed;
 }
+
+.home-landing {
+  position: relative;
+  isolation: isolate;
+}
+.home-landing::before,
+.home-landing::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(1px);
+  opacity: 0.72;
+}
+.home-landing::before {
+  width: 60%;
+  height: 11rem;
+  left: -10%;
+  top: 2rem;
+  transform: rotate(-9deg);
+  background: linear-gradient(90deg, transparent, rgb(46 89 255 / 0.2), rgb(146 67 255 / 0.16), transparent);
+}
+.home-landing::after {
+  width: 75%;
+  height: 10rem;
+  left: -15%;
+  bottom: 8rem;
+  transform: rotate(8deg);
+  background: linear-gradient(90deg, transparent, rgb(245 149 64 / 0.22), rgb(83 50 229 / 0.2), transparent);
+}
+.hero-title {
+  letter-spacing: -0.045em;
+}
+.wave-card {
+  min-height: 21rem;
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.92), rgb(238 237 255 / 0.9));
+  box-shadow: 0 24px 70px -35px rgb(39 42 140 / 0.48);
+}
+.wave-ribbon {
+  position: absolute;
+  pointer-events: none;
+  width: 130%;
+  height: 7rem;
+  left: -16%;
+  border-radius: 50%;
+  border-top: 2px solid rgb(82 74 231 / 0.35);
+  box-shadow: 0 -10px 0 -8px rgb(246 153 64 / 0.38), 0 -20px 0 -16px rgb(63 102 248 / 0.28);
+  transform: rotate(-7deg);
+}
+.wave-ribbon-one { bottom: -4rem; }
+.wave-ribbon-two { bottom: -5.6rem; opacity: 0.62; transform: rotate(-7deg) translateX(2rem); }
+
+.dark body {
+  background-image: radial-gradient(circle at 78% 4%, rgb(70 80 255 / 0.22), transparent 27rem),
+    radial-gradient(circle at 7% 76%, rgb(246 125 64 / 0.18), transparent 25rem),
+    linear-gradient(135deg, rgb(8 8 35) 0%, rgb(11 13 50) 50%, rgb(8 7 30) 100%);
+}
+.dark .wave-card {
+  background: linear-gradient(145deg, rgb(28 29 76), rgb(17 18 53));
+}
+.dark .home-landing::before,
+.dark .home-landing::after { opacity: 1; }
+
 
 .ambient-orb {
   opacity: 0.42;

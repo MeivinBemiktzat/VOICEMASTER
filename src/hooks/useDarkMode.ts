@@ -4,7 +4,7 @@ import { STORAGE_KEYS } from "../lib/storage";
 function initialDark(): boolean {
   const stored = localStorage.getItem(STORAGE_KEYS.darkMode);
   if (stored !== null) return stored === "true";
-  return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+  return false;
 }
 
 export function useDarkMode() {
