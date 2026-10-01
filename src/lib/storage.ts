@@ -23,4 +23,6 @@ export const STORAGE_KEYS = {
   activeApiKey: "gemini_active_api_key",
   customStyles: "custom_voice_styles",
   darkMode: "voice_master_dark_mode",
+  accent: "voice_master_accent",
+  compact: "voice_master_compact",
 };

@@ -9,11 +9,9 @@ function maskKey(key: string) {
 }
 
 export default function Settings() {
-  const { currentApiKey, savedApiKeys, addKey, removeKey, selectKey } = useAppStore();
+  const { currentApiKey, savedApiKeys, addKey, removeKey, selectKey, accent, setAccent, compact, setCompact } = useAppStore();
   const showToast = useToast();
   const [input, setInput] = useState("");
-  const [accent, setAccent] = useState("blue");
-  const [compact, setCompact] = useState(false);
 
   const handleAdd = () => {
     if (!input.trim()) return;

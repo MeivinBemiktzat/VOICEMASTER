@@ -17,6 +17,17 @@
   color-scheme: light;
 }
 
+html[data-accent="violet"] {
+  --brand: 124 77 221;
+  --soft: 243 238 255;
+}
+html[data-accent="sun"] {
+  --brand: 190 126 18;
+  --soft: 255 248 226;
+}
+html.compact .card { padding-top: 1rem; padding-bottom: 1rem; }
+html.compact main { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+
 .dark {
   --bg: 13 12 26;
   --surface: 22 21 42;
