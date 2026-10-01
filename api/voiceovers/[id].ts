@@ -6,7 +6,7 @@ export const config = { api: { bodyParser: false } };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    if (req.method === "PUT") {
+    if (req.method === "POST" || req.method === "PUT") {
       const sessionId = getSession(req, res);
       const id = String(req.query.id || "");
       if (!/^[a-f0-9-]{36}$/.test(id)) return res.status(400).json({ error: "Invalid id" });
@@ -19,6 +19,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         Key: metadata.audioKey,
         Body: req,
         ContentType: String(req.headers["content-type"] || "audio/wav"),
+        ...(req.headers["content-length"] ? { ContentLength: Number(req.headers["content-length"]) } : {}),
       }));
       return res.status(200).json({ ok: true });
     }
