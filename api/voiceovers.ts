@@ -49,10 +49,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const style = String(body.style || "").trim();
       const kind = body.kind === "podcast" ? "podcast" : "narration";
       const sourceText = typeof body.sourceText === "string" ? body.sourceText.slice(0, 20000) : undefined;
+      const storageFileName = String(body.storageFileName || "");
       if (!title || !voice || !style) return sendError(res, 400, "Missing track metadata");
+      if (!/^[a-f0-9-]{36}\\.js$/.test(storageFileName)) return sendError(res, 400, "Invalid storage filename");
 
       const id = randomUUID();
-      const audioKey = key(sessionId, `voiceovers/${id}/audio.js`);
+      const audioKey = key(sessionId, `voiceovers/${id}/${storageFileName}`);
       const metadataKey = key(sessionId, `voiceovers/${id}/metadata.json`);
       log("creating_voiceover", { id, audioKey, metadataKey, title, voice, style, kind, sourceTextLength: sourceText?.length || 0 });
       await putJson(metadataKey, {
