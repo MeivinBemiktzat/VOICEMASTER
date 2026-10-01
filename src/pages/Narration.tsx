@@ -237,7 +237,7 @@ export default function Narration() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-black text-ink sm:text-xl">הקלטות אחרונות</h2>
-            <p className="text-[11px] text-mute">היסטוריית הקריינות שלך בסשן הנוכחי</p>
+            <p className="text-[11px] text-mute">היסטוריית הקריינות שלך נשמרת בענן</p>
           </div>
           {narrationTracks.length > 0 && (
             <button
