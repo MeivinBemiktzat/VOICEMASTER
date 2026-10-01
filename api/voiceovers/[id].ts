@@ -30,14 +30,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const metadata = await getJson<any>(key(sessionId, `voiceovers/${id}/metadata.json`));
       if (!metadata || metadata.status !== "ready") return res.status(404).json({ error: "Voiceover not found" });
 
+      const range = String(req.headers.range || "");
       const result = await s3.send(new GetObjectCommand({
         Bucket: process.env.HF_STORAGE_BUCKET!,
         Key: metadata.audioKey,
+        ...(range ? { Range: range } : {}),
       }));
       if (!result.Body) return res.status(404).json({ error: "Audio not found" });
 
+      res.statusCode = range && result.ContentRange ? 206 : 200;
+      res.setHeader("Accept-Ranges", "bytes");
       res.setHeader("Content-Type", result.ContentType || "audio/wav");
-      res.setHeader("Content-Disposition", `inline; filename="${id}.wav"`);
+      res.setHeader("Content-Disposition", req.query.download === "1"
+        ? `attachment; filename="${id}.wav"`
+        : `inline; filename="${id}.wav"`);
+      if (result.ContentRange) res.setHeader("Content-Range", result.ContentRange);
       if (result.ContentLength != null) res.setHeader("Content-Length", String(result.ContentLength));
       return result.Body.pipe(res);
     }
