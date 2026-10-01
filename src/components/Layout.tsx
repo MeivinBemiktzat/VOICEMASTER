@@ -209,7 +209,7 @@ export default function Layout() {
         <div className="ambient-dot dot-three absolute right-[8%] bottom-[12%] size-4 rounded-full" />
       </div>
 
-      <header className="sticky top-0 z-40 border-b border-line bg-bg/75 shadow-sm backdrop-blur-xl">
+      <header className="site-header sticky top-0 z-40 border-b border-white/10 bg-bg/45 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <NavLink to="/" className="flex items-center gap-2.5 sm:gap-3">
             <div className="rounded-2xl bg-gradient-to-br from-brand via-violet-500 to-sun p-2 text-white shadow-lg ring-8 ring-brand/10 sm:p-2.5">
@@ -289,9 +289,15 @@ export default function Layout() {
       <footer className="mx-auto max-w-7xl px-4 pb-10 pt-6 sm:px-6">
         <div className="card rounded-2xl p-6 text-center sm:rounded-[2rem] sm:p-7">
           <p className="text-base font-black text-ink sm:text-lg">אתר זה פותח על ידי אריה AI</p>
-          <p className="mt-2 text-xs text-mute sm:text-sm">
-            הפקת קר��ינות ופודקאסטים בעברית באמצעות בינה מלאכותית · {new Date().getFullYear()}
-          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-bold sm:text-sm">
+            <a className="text-brand transition-colors hover:text-ink" href="https://mitmachim.top/user/%D7%90%D7%A8%D7%99%D7%94-ai" target="_blank" rel="noreferrer">
+              אריה AI במתמחים טופ
+            </a>
+            <span className="text-line" aria-hidden="true">·</span>
+            <a className="text-brand transition-colors hover:text-ink" href="https://f2.freeivr.co.il/user/%D7%90%D7%A8%D7%99%D7%94-ai" target="_blank" rel="noreferrer">
+              אריה AI בפורום ימות
+            </a>
+          </div>
         </div>
       </footer>
     </div>
