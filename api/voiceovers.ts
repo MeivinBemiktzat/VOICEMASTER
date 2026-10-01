@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const sourceText = typeof body.sourceText === "string" ? body.sourceText.slice(0, 20000) : undefined;
       const storageFileName = String(body.storageFileName || "");
       if (!title || !voice || !style) return sendError(res, 400, "Missing track metadata");
-      if (!/^[a-f0-9-]{36}\\.js$/.test(storageFileName)) return sendError(res, 400, "Invalid storage filename");
+      if (!/^[a-f0-9-]{36}\.js$/.test(storageFileName)) { log("invalid_storage_filename", { storageFileName }); return sendError(res, 400, "Invalid storage filename"); }
 
       const id = randomUUID();
       const audioKey = key(sessionId, `voiceovers/${id}/${storageFileName}`);
