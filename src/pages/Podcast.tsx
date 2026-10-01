@@ -56,8 +56,9 @@ export default function Podcast() {
           apiOpts
         ),
       ({ blob }) => {
-        store.addTrack(blob, `פודקאסט: ${topic.slice(0, 24)}`, `${voiceA} / ${voiceB}`, store.style, "podcast");
-        showToast("הפודקאסט הופק בהצלחה!", "success");
+        store.addTrack(blob, `פודקאסט: ${topic.slice(0, 24)}`, `${voiceA} / ${voiceB}`, store.style, "podcast", script)
+          .then(() => showToast("הפודקאסט הופק ונשמר בהצלחה!", "success"))
+          .catch(() => showToast("הפודקאסט הופק, אך השמירה למסד הנתונים נכשלה"));
       }
     );
   };
