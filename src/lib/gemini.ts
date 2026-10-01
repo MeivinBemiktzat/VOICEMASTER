@@ -3,7 +3,7 @@ import { prompts } from "./prompts";
 
 /** מודלים: שנו כאן אם Google מחליפה שמות. הערכים זהים לאתר המקורי. */
 export const MODEL_TEXT = "gemini-3.5-flash-lite";
-export const MODEL_AUDIO = "gemini-2.5-flash-preview-tts";
+export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";
 
 const apiKeyCooldowns = new Map<string, number>();
 
