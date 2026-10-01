@@ -64,6 +64,7 @@ export const statsKey = "_system/stats.json";
 export const profileKey = (sessionId: string) => key(sessionId, "profile.json");
 
 export async function putJson(objectKey: string, value: unknown) {
+  console.log("[VoiceMaster][storage]", JSON.stringify({ operation: "putJson", key: objectKey }));
   await s3.send(new PutObjectCommand({
     Bucket: bucket!,
     Key: objectKey,
@@ -73,6 +74,7 @@ export async function putJson(objectKey: string, value: unknown) {
 }
 
 export async function getJson<T>(objectKey: string): Promise<T | null> {
+  console.log("[VoiceMaster][storage]", JSON.stringify({ operation: "getJson", key: objectKey }));
   try {
     const result = await s3.send(new GetObjectCommand({ Bucket: bucket!, Key: objectKey }));
     const text = await result.Body?.transformToString();
@@ -84,6 +86,7 @@ export async function getJson<T>(objectKey: string): Promise<T | null> {
 }
 
 export async function objectExists(objectKey: string) {
+  console.log("[VoiceMaster][storage]", JSON.stringify({ operation: "headObject", key: objectKey }));
   try {
     await s3.send(new HeadObjectCommand({ Bucket: bucket!, Key: objectKey }));
     return true;
@@ -105,10 +108,12 @@ export async function signedDownload(objectKey: string) {
 }
 
 export async function removeObject(objectKey: string) {
+  console.log("[VoiceMaster][storage]", JSON.stringify({ operation: "deleteObject", key: objectKey }));
   await s3.send(new DeleteObjectCommand({ Bucket: bucket!, Key: objectKey }));
 }
 
 export async function listKeys(prefix: string) {
+  console.log("[VoiceMaster][storage]", JSON.stringify({ operation: "listObjects", prefix }));
   const result = await s3.send(new ListObjectsV2Command({ Bucket: bucket!, Prefix: prefix }));
   return (result.Contents || []).map((item) => item.Key).filter(Boolean) as string[];
 }
