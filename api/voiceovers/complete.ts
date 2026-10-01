@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getSession, getJson, key, objectExists, putJson, updateStats } from "../_storage";
+import { getSession, getJson, key, objectExists, putJson, updateStats } from "../lib/storage.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
