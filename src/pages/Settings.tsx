@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, Copy, KeyRound, Palette, Settings as SettingsIcon, Sparkles, Trash2 } from "lucide-react";
 import { useAppStore } from "../lib/AppStore";
 import { useToast } from "../lib/ToastContext";
+import { useAuth } from "../lib/AuthContext";
 
 function maskKey(key: string) {
   if (key.length <= 10) return key;
@@ -10,6 +11,8 @@ function maskKey(key: string) {
 
 export default function Settings() {
   const { currentApiKey, savedApiKeys, addKey, removeKey, selectKey, accent, setAccent, compact, setCompact } = useAppStore();
+  const { user, uploadAvatar, logout } = useAuth();
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const showToast = useToast();
   const [input, setInput] = useState("");
 
@@ -41,6 +44,24 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
+      <div className="card rounded-[2rem] p-5 sm:col-span-2 sm:p-7">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand text-2xl font-black text-onbrand">
+            {user?.avatarDataUrl ? <img src={user.avatarDataUrl} alt="תמונת פרופיל" className="size-full object-cover" /> : (user?.username?.[0] || "?").toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-lg font-black text-ink">{user?.username}</h3>
+            <p className="text-xs text-mute">תמונת הפרופיל נשמרת בחשבון שלכם.</p>
+            <label className="btn btn-outline mt-3 inline-flex cursor-pointer">
+              {avatarBusy ? "מעלה..." : "החלפת תמונת פרופיל"}
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={avatarBusy} onChange={async e => { const file=e.target.files?.[0]; if(!file)return; setAvatarBusy(true); try{await uploadAvatar(file);showToast("תמונת הפרופיל עודכנה","success");}catch(err){showToast(err instanceof Error?err.message:"לא ניתן לעדכן תמונה");}finally{setAvatarBusy(false);}}}/>
+            </label>
+          </div>
+          <button onClick={async()=>{await logout();showToast("התנתקת");}} className="btn btn-outline !text-danger">התנתקות</button>
+        </div>
+      </div>
+
+
         <div className="card rounded-[2rem] p-5 sm:col-span-2 sm:p-7">
           <div className="mb-4 flex items-center gap-3"><div className="rounded-xl bg-brand/10 p-2 text-brand"><KeyRound size={19} /></div><div><h3 className="font-display text-lg font-black text-ink">מפתחות Gemini API</h3><p className="text-xs text-mute">שמירה מקומית בדפדפן בלבד</p></div></div>
           <p className="mb-4 text-sm leading-6 text-mute">הוסיפו מפתח, בחרו מפתח פעיל והחליפו ביניהם בכל עת. המפתח אינו נשלח לשרת שלנו.</p>
