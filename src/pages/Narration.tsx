@@ -110,7 +110,7 @@ export default function Narration() {
       ({ blob }) => {
         store.addTrack(blob, text.slice(0, 30), store.voice, store.style, "narration", text)
           .then(() => showToast("קריינות הופקה ונשמרה בהצלחה!", "success"))
-          .catch((error) => showToast(`הקריינות הופקה, אך השמירה נכשלה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`));
+          .catch((error) => { if (error instanceof Error && error.message === "AUTH_REQUIRED") navigate("/register"); else showToast(`הקריינות הופקה, אך השמירה נכשלה: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`); });
       }
     );
   };
