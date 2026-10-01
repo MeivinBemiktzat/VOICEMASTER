@@ -10,9 +10,9 @@ import AiButton from "../components/AiButton";
 import TrackCard from "../components/TrackCard";
 
 const QUICK_EDITS = [
-  { label: "✨ ריכוך", instruction: "הפוך את הטקסט ליותר רגוע ונעים" },
-  { label: "✨ שיווקי", instruction: "הפוך את הטקסט ליותר שיווקי ואנרגטי" },
-  { label: "✨ קיצור", instruction: "קצר את הטקסט ב-30% מבלי לאבד משמעות" },
+  { label: "ריכוך", instruction: "הפוך את הטקסט ליותר רגוע ונעים" },
+  { label: "שיווקי", instruction: "הפוך את הטקסט ליותר שיווקי ואנרגטי" },
+  { label: "קיצור", instruction: "קצר את הטקסט ב-30% מבלי לאבד משמעות" },
 ];
 
 export default function Narration() {
@@ -138,10 +138,10 @@ export default function Narration() {
               </AiButton>
             ))}
             <AiButton onClick={translateText} loading={loadingKey === "translate"}>
-              ✨ תרגם
+              תרגם
             </AiButton>
             <AiButton onClick={summarizeText} loading={loadingKey === "summarize"}>
-              ✨ סיכום
+              סיכום
             </AiButton>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function Narration() {
               className="flex items-center gap-1 rounded-full bg-soft px-2.5 py-1 text-[11px] font-bold text-brand hover:bg-line"
             >
               {loadingKey === "tone" && <Loader2 size={12} className="animate-spin" />}
-              ✨ התאם סגנון אוטומטית
+              התאם סגנון אוטומטית
             </button>
           </div>
           <textarea
@@ -171,7 +171,7 @@ export default function Narration() {
             className="btn btn-quiet mb-5 mt-3 w-full"
           >
             {loadingKey === "vocalize" ? <Loader2 size={16} className="animate-spin" /> : <Wand2 size={16} />}
-            ✨ ניקוד אוטומטי
+            ניקוד אוטומטי
           </button>
 
           <div className="mb-4 grid gap-3 sm:grid-cols-2 sm:gap-4">

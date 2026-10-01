@@ -1,105 +1,31 @@
 import { Link } from "react-router-dom";
-import { Mic, Podcast, History, Sparkles, KeyRound, ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowUpLeft, AudioLines, Clock3, KeyRound, Mic2, Podcast, Sparkles, WandSparkles } from "lucide-react";
 import { uniqueVoiceCount } from "../lib/catalogs";
 
 const FEATURES = [
-  {
-    icon: Sparkles,
-    title: "כתיבה חכמה בעזרת AI",
-    text: "כתיבת טקסט אוטומטית, ריכוך, קיצור, תרגום, סיכום וניקוד — הכל בלחיצת כפתור.",
-  },
-  {
-    icon: Mic,
-    title: `+${uniqueVoiceCount} קולות קריינות`,
-    text: "מבחר עצום של קולות גבריים ונשיים בעברית, עם עשרות סגנונות הגשה שונים.",
-  },
-  {
-    icon: Podcast,
-    title: "סטודיו פודקאסט",
-    text: "יצירת תסריט דו-שיח אוטומטי והפקת אודיו עם שני דוברים וקולות נפרדים.",
-  },
-  {
-    icon: History,
-    title: "היסטוריית הקלטות",
-    text: "כל ההפקות שלך נשמרות במהלך הסשן, מוכנות להאזנה ולהורדה בכל רגע.",
-  },
+  { icon: WandSparkles, kicker: "01", title: "כתיבה שעובדת בשבילכם", text: "נסחו, קצרו, תרגמו וחדדו כל טקסט בעזרת כלי AI מדויקים." },
+  { icon: AudioLines, kicker: "02", title: `${uniqueVoiceCount} קולות טבעיים`, text: "מצאו את הטון הנכון למותג שלכם מתוך ספריית קולות עשירה בעברית." },
+  { icon: Podcast, kicker: "03", title: "פודקאסט בשיחה אחת", text: "הפכו רעיון לתסריט דו־שיח והפיקו ממנו אודיו מוכן לפרסום." },
+  { icon: Clock3, kicker: "04", title: "כל הפרויקטים במקום אחד", text: "האזינו, הורידו וחזרו לכל הפקה שנוצרה במהלך הסשן." },
 ];
 
 export default function Home() {
   return (
-    <div className="space-y-14 sm:space-y-20">
-      <section className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
-        <div>
-          <span className="luxury-chip mb-4 inline-block">בינה מלאכותית · קריינות בעברית</span>
-          <h1 className="font-display text-3xl font-black leading-tight text-ink sm:text-5xl">
-            הפכו כל טקסט לקריינות מקצועית <span className="text-brand">תוך שניות</span>
-          </h1>
-          <p className="mt-4 max-w-xl text-sm text-mute sm:text-base">
-            VoiceMaster Studio הוא סטודיו קריינות ופודקאסטים מבוסס בינה מלאכותית של Gemini. כתבו, ערכו,
-            נקדו ותרגמו טקסט בעברית, ואז הפיקו קריינות איכותית במבחר עצום של קולות וסגנונות.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link to="/narration" className="btn btn-primary">
-              <Mic size={18} />
-              התחל להקליט קריינות
-              <ArrowLeft size={16} />
-            </Link>
-            <Link to="/podcast" className="btn btn-outline">
-              <Podcast size={18} />
-              צור פודקאסט
-            </Link>
-          </div>
+    <div className="flex flex-col gap-16 sm:gap-24">
+      <section className="hero-panel">
+        <div className="hero-copy">
+          <div className="eyebrow"><span className="eyebrow-dot" /> סטודיו קולי חכם בעברית</div>
+          <h1>הקול של הרעיון שלכם<br /><span>מתחיל כאן.</span></h1>
+          <p>VoiceMaster הוא סביבת עבודה מקצועית ליצירת קריינות, פודקאסטים ותוכן קולי. פחות התעסקות, יותר יצירה שנשמעת מצוין.</p>
+          <div className="mt-8 flex flex-wrap gap-3"><Link to="/narration" className="btn btn-primary"><Mic2 size={17} /> התחילו ליצור <ArrowLeft size={16} /></Link><Link to="/podcast" className="btn btn-ghost"><Podcast size={17} /> סטודיו פודקאסט</Link></div>
+          <div className="hero-meta"><div><strong>01</strong><span>כתבו רעיון</span></div><div><strong>02</strong><span>בחרו קול</span></div><div><strong>03</strong><span>הפיקו אודיו</span></div></div>
         </div>
-        <div className="card relative overflow-hidden rounded-[2rem] p-6 sm:p-10">
-          <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-brand/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-sun/20 blur-3xl" />
-          <div className="relative space-y-4">
-            <div className="flex items-center gap-3">
-              {[0.4, 0.9, 0.55, 1, 0.35, 0.75, 0.5].map((h, i) => (
-                <span
-                  key={i}
-                  className="wave-bar w-2 rounded-full bg-gradient-to-t from-brand to-sun"
-                  style={{ height: `${h * 60 + 20}px`, animationDelay: `${i * 0.12}s` }}
-                />
-              ))}
-            </div>
-            <p className="text-sm font-bold text-ink">"ברוכים הבאים ל-VoiceMaster, הסטודיו החכם שלכם לקריינות..."</p>
-            <p className="text-xs text-mute">קול: Kore · סגנון: מקצועי</p>
-          </div>
-        </div>
+        <div className="hero-visual" aria-label="תצוגת גל קול פעיל"><div className="visual-top"><span className="live-pill"><span /> LIVE SESSION</span><span className="visual-time">00:24</span></div><div className="orbital-mark"><img src="/voicemaster-icon.png" alt="" /></div><div className="waveform">{[24, 38, 62, 92, 48, 72, 34, 84, 56, 98, 42, 76, 30, 64, 48, 88, 36, 70, 52, 30].map((height, index) => <span key={index} style={{ height: `${height}px` }} />)}</div><div className="visual-bottom"><div><small>PROJECT</small><strong>Brand story / intro</strong></div><div className="visual-status"><Sparkles size={15} /> Ready to generate</div></div></div>
       </section>
 
-      <section>
-        <h2 className="mb-6 text-center font-display text-2xl font-black text-ink sm:text-3xl">
-          כל מה שצריך כדי להישמע מקצועי
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="card rounded-2xl p-5 sm:p-6">
-              <div className="mb-3 inline-flex rounded-xl bg-brand/10 p-2.5 text-brand">
-                <f.icon size={22} />
-              </div>
-              <h3 className="mb-1.5 text-sm font-black text-ink">{f.title}</h3>
-              <p className="text-xs text-mute">{f.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <section className="section-block"><div className="section-heading"><div><span className="section-index">THE WORKFLOW</span><h2>כל מה שצריך כדי<br /><em>להישמע מקצועי.</em></h2></div><p>כלים פשוטים וחכמים שמחברים בין רעיון, טקסט וקול — במקום אחד.</p></div><div className="feature-grid">{FEATURES.map((feature) => <article key={feature.kicker} className="feature-card"><div className="feature-card-top"><span>{feature.kicker}</span><feature.icon size={21} /></div><h3>{feature.title}</h3><p>{feature.text}</p></article>)}</div></section>
 
-      <section className="card flex flex-col items-center gap-4 rounded-[2rem] p-8 text-center sm:p-12">
-        <div className="rounded-2xl bg-brand/10 p-3 text-brand">
-          <KeyRound size={26} />
-        </div>
-        <h2 className="font-display text-xl font-black text-ink sm:text-2xl">מתחילים בשני צעדים פשוטים</h2>
-        <p className="max-w-lg text-xs text-mute sm:text-sm">
-          הגדירו מפתח Gemini API משלכם בכפתור "הגדר מפתח" בראש העמוד, ולאחר מכן גשו לסטודיו הקריינות או
-          הפודקאסט כדי להתחיל ליצור.
-        </p>
-        <Link to="/narration" className="btn btn-primary mt-1">
-          למעבר לסטודיו הקריינות
-          <ArrowLeft size={16} />
-        </Link>
-      </section>
+      <section className="cta-panel"><div className="cta-icon"><KeyRound size={23} /></div><div><span className="section-index">READY WHEN YOU ARE</span><h2>הכניסו את הקול שלכם<br /><em>לתוך הסיפור.</em></h2><p>חברו מפתח Gemini והתחילו ליצור קריינות מקורית כבר עכשיו.</p></div><Link to="/narration" className="btn btn-primary cta-action">לסטודיו <ArrowUpLeft size={16} /></Link></section>
     </div>
   );
 }

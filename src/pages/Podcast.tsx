@@ -104,7 +104,7 @@ export default function Podcast() {
               className="btn btn-primary w-full"
             >
               {loadingKey === "script" ? <Loader2 size={16} className="animate-spin" /> : null}
-              ✨ צור תסריט דו-שיח
+              צור תסריט דו-שיח
             </button>
           </div>
 
