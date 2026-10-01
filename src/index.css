@@ -29,14 +29,14 @@ html.compact .card { padding-top: 1rem; padding-bottom: 1rem; }
 html.compact main { padding-top: 1.25rem; padding-bottom: 1.25rem; }
 
 .dark {
-  --bg: 13 12 26;
-  --surface: 22 21 42;
-  --soft: 31 30 56;
-  --line: 44 42 74;
-  --ink: 237 235 255;
-  --mute: 163 161 200;
-  --brand: 139 146 255;
-  --onbrand: 13 12 26;
+  --bg: 8 11 21;
+  --surface: 15 18 39;
+  --soft: 22 24 53;
+  --line: 44 47 84;
+  --ink: 248 250 255;
+  --mute: 164 169 204;
+  --brand: 111 91 255;
+  --onbrand: 255 255 255;
   --danger: 255 138 135;
   --ok: 95 211 163;
   --shadow: 0 0 0;
@@ -92,8 +92,30 @@ body {
 }
 .wave-card {
   min-height: 21rem;
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.92), rgb(238 237 255 / 0.9));
+  background: rgb(255 255 255 / 0.70);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgb(255 255 255 / 0.8);
   box-shadow: 0 24px 70px -35px rgb(39 42 140 / 0.48);
+}
+.hero-gradient-text {
+  background: linear-gradient(100deg, rgb(65 90 245), rgb(124 58 237) 55%, rgb(217 70 239));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.wave-card .wave-bar {
+  background: linear-gradient(to bottom, #ffbd3f 0%, #f59e45 26%, #9b5cf6 68%, #4038d9 100%);
+  box-shadow: 0 0 12px rgb(139 92 246 / 0.3);
+}
+.btn-primary {
+  background: linear-gradient(110deg, #7c3aed 0%, #d946ef 52%, #4f46e5 100%);
+  color: white;
+  box-shadow: 0 0 25px rgb(147 51 234 / 0.4);
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+  box-shadow: 0 0 32px rgb(217 70 239 / 0.5);
 }
 .wave-ribbon {
   position: absolute;
@@ -110,15 +132,43 @@ body {
 .wave-ribbon-two { bottom: -5.6rem; opacity: 0.62; transform: rotate(-7deg) translateX(2rem); }
 
 .dark body {
-  background-image: radial-gradient(circle at 78% 4%, rgb(70 80 255 / 0.22), transparent 27rem),
-    radial-gradient(circle at 7% 76%, rgb(246 125 64 / 0.18), transparent 25rem),
-    linear-gradient(135deg, rgb(8 8 35) 0%, rgb(11 13 50) 50%, rgb(8 7 30) 100%);
+  background-image:
+    radial-gradient(ellipse 42rem 18rem at 5% 18%, rgb(255 132 45 / 0.24), transparent 68%),
+    radial-gradient(ellipse 42rem 22rem at 96% 28%, rgb(55 73 255 / 0.3), transparent 68%),
+    radial-gradient(ellipse 55rem 20rem at 30% 100%, rgb(119 43 255 / 0.3), transparent 70%),
+    linear-gradient(135deg, #080b15 0%, #0a0d22 52%, #080b15 100%);
 }
 .dark .wave-card {
-  background: linear-gradient(145deg, rgb(28 29 76), rgb(17 18 53));
+  background: rgb(255 255 255 / 0.03);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow: 0 24px 80px -38px rgb(0 0 0 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+.dark .wave-card .relative > div:first-child {
+  background: rgb(255 255 255 / 0.035);
+  border-color: rgb(255 255 255 / 0.1);
+}
+.dark .hero-gradient-text {
+  background: linear-gradient(100deg, #6385ff, #a855f7 55%, #d946ef);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.dark .btn-outline {
+  background: rgb(255 255 255 / 0.025);
+  border-color: rgb(255 255 255 / 0.16);
+  color: rgb(248 250 255);
 }
 .dark .home-landing::before,
-.dark .home-landing::after { opacity: 1; }
+.dark .home-landing::after { opacity: 1; filter: blur(2px); }
+.dark .home-landing::before {
+  background: linear-gradient(90deg, transparent, rgb(30 116 255 / 0.6), rgb(168 85 247 / 0.45), rgb(255 159 67 / 0.52), transparent);
+  box-shadow: 0 0 38px rgb(59 130 246 / 0.25);
+}
+.dark .home-landing::after {
+  background: linear-gradient(90deg, transparent, rgb(255 145 58 / 0.55), rgb(168 85 247 / 0.52), rgb(47 72 255 / 0.48), transparent);
+  box-shadow: 0 0 45px rgb(124 58 237 / 0.28);
+}
 
 
 .ambient-orb {
