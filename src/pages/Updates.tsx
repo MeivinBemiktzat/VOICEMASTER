@@ -131,7 +131,7 @@ export default function Updates() {
                         <div className="mt-2 text-sm leading-6 text-ink" dangerouslySetInnerHTML={{ __html: formatText(item.body) }} />
                         <div className="mt-3 flex items-center gap-3"><button onClick={() => { setReplyTo(item.id); setComment(""); }} className="inline-flex items-center gap-1 text-xs font-bold text-brand">
                           <Reply size={14} />השב להודעה
-                        </button>
+                        </button>{user?.role === "admin" && <button type="button" onClick={async () => { if (!window.confirm("למחוק את התגובה?")) return; const response = await fetch("/api/updates", { method: "DELETE", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ topicId: topic.id, commentId: item.id }) }); if (response.ok) await load(); }} className="text-xs font-bold text-red-600">מחק</button>}</div>
                       </div>
                     ))}
                   </div>
