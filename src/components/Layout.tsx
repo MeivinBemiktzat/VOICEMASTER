@@ -13,7 +13,7 @@ const NAV_LINKS = [
   { to: "/history", label: "היסטוריה" },
   { to: "/updates", label: "עדכונים" },
   { to: "/settings", label: "הגדרות" },
-  { to: "/about", label: "אודות" },
+  { to: "/contact", label: "יצירת קשר" },
 ];
 
 function maskKey(key: string) {
