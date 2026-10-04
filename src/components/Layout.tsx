@@ -9,8 +9,8 @@ import { useAuth } from "../lib/AuthContext";
 const NAV_LINKS = [
   { to: "/", label: "בית", end: true },
   { to: "/narration", label: "סטודיו קריינות" },
-  { to: "/music", label: "מוזיקת רקע" },
-  { to: "/editor", label: "עורך אודיו" },
+
+  { to: "/editor", label: "סטודיו עריכת אודיו" },
   { to: "/podcast", label: "סטודיו פודקאסט" },
   { to: "/updates", label: "עדכונים" },
   { to: "/settings", label: "הגדרות" },
