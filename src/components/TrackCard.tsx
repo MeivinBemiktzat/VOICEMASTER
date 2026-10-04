@@ -1,7 +1,7 @@
-import { Download, Trash2, Podcast, Mic } from "lucide-react";
-import type { Track } from "../lib/types";
+import { Download, Trash2, Podcast, Mic, Scissors } from "lucide-react";
+import type { Track } from "../lib/types"; import { useNavigate } from "react-router-dom";
 
-export default function TrackCard({ track, onRemove }: { track: Track; onRemove: (id: string) => void }) {
+export default function TrackCard({ track, onRemove }: { track: Track; onRemove: (id: string) => void }) { const navigate=useNavigate();
   return (
     <div className="card flex flex-col items-start justify-between gap-3 rounded-xl p-3 sm:flex-row sm:items-center sm:rounded-2xl sm:p-4">
       <div className="w-full min-w-0 flex-grow sm:w-auto">
