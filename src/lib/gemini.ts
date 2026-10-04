@@ -132,6 +132,7 @@ async function apiCall(
       });
       const data = await response.json();
       if (response.ok) return data;
+      console.error("[VoiceMaster][Gemini]", { model, status: response.status, error: data?.error, keySuffix: key.slice(-4) });
 
       const userMessage = getHebrewApiError(response.status, data?.error?.message);
       lastError = new ApiCallError(data?.error?.message || "API request failed", userMessage, response.status);
