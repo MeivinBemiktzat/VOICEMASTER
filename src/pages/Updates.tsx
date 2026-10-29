@@ -108,6 +108,7 @@ export default function Updates() {
         <div className="space-y-5">
           {topics.map((topic) => (
             <article key={topic.id} className="card overflow-hidden rounded-[2rem]">
+              {user?.role === "admin" && <div className="flex flex-wrap gap-2 border-b border-line px-5 pt-5 sm:px-7"><button type="button" className="btn btn-outline" onClick={() => { setOpen(topic.id); setEditingTopic(topic.id); setEditTitle(topic.title); setEditBody(topic.body); }}>עריכת נושא</button><button type="button" className="btn btn-outline text-red-600" onClick={async () => { if (!window.confirm("למחוק את הנושא וכל התגובות שבו?")) return; const r = await fetch("/api/updates", { method: "PATCH", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ topicId: topic.id, action: "delete" }) }); const d = await r.json().catch(() => ({})); if (!r.ok) { window.alert(d.error || "לא ניתן למחוק את הנושא"); return; } if (open === topic.id) setOpen(null); await load(); }}>מחיקת נושא</button></div>}
               <button className="w-full p-5 text-right sm:p-7" onClick={() => setOpen(open === topic.id ? null : topic.id)}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -116,8 +117,9 @@ export default function Updates() {
                   </div>
                   <MessageCircle className="shrink-0 text-brand" />
                 </div>
-                {open === topic.id && (editingTopic===topic.id ? <div className="mt-5 space-y-3 border-t border-line pt-5"><input value={editTitle} onChange={e=>setEditTitle(e.target.value)} className="field w-full"/><textarea value={editBody} onChange={e=>setEditBody(e.target.value)} className="field min-h-40 w-full"/><div className="flex gap-2"><button type="button" className="btn btn-primary" onClick={async()=>{const r=await fetch("/api/updates",{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({topicId:topic.id,action:"edit",title:editTitle,body:editBody})});if(r.ok){setEditingTopic(null);await load()}else{const d=await r.json();alert(d.error||"שגיאה")}}}>שמירה</button><button type="button" className="btn btn-outline" onClick={()=>setEditingTopic(null)}>ביטול</button></div></div> : <div className="mt-5 border-t border-line pt-5 text-sm leading-7 text-ink" dangerouslySetInnerHTML={{ __html: formatText(topic.body) }}/>) }
+                {open === topic.id && editingTopic !== topic.id && <div className="mt-5 border-t border-line pt-5 text-sm leading-7 text-ink" dangerouslySetInnerHTML={{ __html: formatText(topic.body) }}/>}
               </button>
+              {open === topic.id && editingTopic === topic.id && user?.role === "admin" && <div className="space-y-3 border-t border-line p-5 sm:p-7"><input aria-label="כותרת הנושא" value={editTitle} onChange={e=>setEditTitle(e.target.value)} className="field w-full"/><textarea aria-label="תוכן הנושא" value={editBody} onChange={e=>setEditBody(e.target.value)} className="field min-h-40 w-full"/><div className="flex gap-2"><button type="button" className="btn btn-primary" onClick={async()=>{const r=await fetch("/api/updates",{method:"PATCH",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({topicId:topic.id,action:"edit",title:editTitle,body:editBody})});const d=await r.json().catch(()=>({}));if(r.ok){setEditingTopic(null);await load()}else{alert(d.error||"שגיאה")}}}>שמירה</button><button type="button" className="btn btn-outline" onClick={()=>setEditingTopic(null)}>ביטול</button></div></div>}
 
               {open === topic.id && (
                 <div className="border-t border-line bg-soft/30 p-5 sm:p-7">
