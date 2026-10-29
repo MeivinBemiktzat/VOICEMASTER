@@ -60,7 +60,9 @@ export async function exportMix(clips: AudioClip[]) {
    const delay=ctx.createDelay(2);delay.delayTime.value=c.effect==="flanger"?.012:c.effect==="chorus"?.028:c.effect==="phaser"?.004:.28;
    const wet=ctx.createGain();wet.gain.value=c.effect==="echo"?.3:c.effect==="phaser"?.45:.25;
    const feedback=ctx.createGain();feedback.gain.value=c.effect==="echo"?.22:.12;
-   nodes.reduce((a,n)=>{a.connect(n);return n;},src);nodes[nodes.length-1].connect(gain);gain.connect(ctx.destination);gain.connect(delay);delay.connect(wet);wet.connect(ctx.destination);
+   let chain: AudioNode = src;
+   for (const node of nodes.slice(1)) { chain.connect(node); chain = node; }
+   chain.connect(gain);gain.connect(ctx.destination);gain.connect(delay);delay.connect(wet);wet.connect(ctx.destination);
    if(c.effect==="echo"){delay.connect(feedback);feedback.connect(delay);}
   } else {
    nodes.reduce((a,n)=>{a.connect(n);return n;},src);nodes[nodes.length-1].connect(gain);gain.connect(ctx.destination);

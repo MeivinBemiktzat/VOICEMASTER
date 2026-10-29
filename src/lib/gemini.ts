@@ -2,7 +2,7 @@ import type { ApiCallOptions, SpeakerConfig } from "./types";
 import { prompts } from "./prompts";
 
 /** מודלים: שנו כאן אם Google מחליפה שמות. הערכים זהים לאתר המקורי. */
-export const MODEL_TEXT = "gemini-2.5-flash";
+export const MODEL_TEXT = "gemini-3.5-flash-lite";
 export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";
 
 const apiKeyCooldowns = new Map<string, number>();
@@ -38,26 +38,9 @@ export function cleanGeneratedText(text: string): string {
 }
 
 export async function geminiTextCall(prompt: string, opts: ApiCallOptions): Promise<string> {
-  const payload = { contents: [{ parts: [{ text: prompt }] }] };
-  const models = [MODEL_TEXT, "gemini-2.5-flash-lite", "gemini-3.1-flash-lite-preview"];
-  let lastError: unknown;
-  for (const model of models) {
-    try {
-      const data = await apiCall(model, payload, opts);
-      const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!result) throw new ApiCallError("Empty model response", "Gemini לא החזיר תוכן. נסו שוב.");
-      return cleanGeneratedText(result);
-    } catch (error) {
-      lastError = error;
-      const status = error instanceof ApiCallError ? error.status : undefined;
-      if (status !== 404 && status !== 429 && status !== 500 && status !== 502 && status !== 503 && status !== 504) throw error;
-      console.warn("[VoiceMaster][Gemini] Switching fallback model after temporary error", { model, status });
-    }
-  }
-  if (lastError instanceof ApiCallError) {
-    throw new ApiCallError(lastError.message, "מודלי Gemini עמוסים או לא זמינים כרגע. ניסינו כמה מודלים חלופיים; נסו שוב בעוד דקה.", lastError.status);
-  }
-  throw lastError || new Error("Gemini request failed");
+  const data = await apiCall(MODEL_TEXT, { contents: [{ parts: [{ text: prompt }] }] }, opts);
+  const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  return cleanGeneratedText(result || "");
 }
 
 /** קריינות רגילה: קול אחד */
