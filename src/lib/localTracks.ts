@@ -29,7 +29,7 @@ export async function getTracks(ownerId: string): Promise<LocalTrack[]> {
     const req = db.transaction(STORE).objectStore(STORE).getAll();
     req.onsuccess = () => resolve(req.result || []); req.onerror = () => reject(req.error);
   });
-  db.close(); return result.filter(t => t.ownerId === ownerId).sort((a,b) => b.createdAt-a.createdAt);
+  db.close(); return result.filter((t): t is LocalTrack => !!t && typeof t === "object" && t.ownerId === ownerId && typeof t.id === "string" && !!t.blob).sort((a,b) => b.createdAt-a.createdAt);
 }
 export async function deleteTrack(ownerId: string, id: string) {
   const db = await openDb();
