@@ -65,7 +65,7 @@ export async function exportMix(clips: AudioClip[]) {
    chain.connect(gain);gain.connect(ctx.destination);gain.connect(delay);delay.connect(wet);wet.connect(ctx.destination);
    if(c.effect==="echo"){delay.connect(feedback);feedback.connect(delay);}
   } else {
-   nodes.reduce((a,n)=>{a.connect(n);return n;},src);nodes[nodes.length-1].connect(gain);gain.connect(ctx.destination);
+   let chain: AudioNode = src; for (const node of nodes.slice(1)) { chain.connect(node); chain = node; } chain.connect(gain);gain.connect(ctx.destination);
    if(c.effect==="reverb"){const d=ctx.createDelay(2),wet=ctx.createGain();d.delayTime.value=.075;wet.gain.value=.4;gain.connect(d);d.connect(wet);wet.connect(ctx.destination);}
    if(c.effect==="stereo"){const p=ctx.createStereoPanner();p.pan.value=.65;gain.connect(p);p.connect(ctx.destination);}
   }
