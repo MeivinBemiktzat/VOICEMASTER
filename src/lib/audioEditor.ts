@@ -45,7 +45,7 @@ function makeDistortion(ctx: BaseAudioContext) {
 }
 export async function exportMix(clips: AudioClip[]) {
  const end=Math.max(1,...clips.map(c=>c.start+Math.max(0,c.duration-c.trimStart-c.trimEnd)/c.speed+((c.effect==="echo"||c.effect==="reverb")?1.5:0)));
- const ctx=new OfflineAudioContext(2,Math.min(600,Math.ceil(end*44100)),44100);
+ const sampleRate=44100; const frameCount=Math.max(1,Math.min(600*sampleRate,Math.ceil(end*sampleRate))); const ctx=new OfflineAudioContext(2,frameCount,sampleRate);
  for(const c of clips){
   const b=await ctx.decodeAudioData(await c.blob.arrayBuffer()),src=ctx.createBufferSource();src.buffer=b;src.playbackRate.value=c.speed;
   const gain=ctx.createGain();gain.gain.value=Math.max(0,c.volume);
