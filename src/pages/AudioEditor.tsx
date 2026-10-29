@@ -16,15 +16,16 @@ export default function AudioEditor(){
  const[error,setError]=useState("");const[showNarrations,setShowNarrations]=useState(false);const[previewUrl,setPreviewUrl]=useState("");
  const[busy,setBusy]=useState(false);const[cutMode,setCutMode]=useState(false);const[cutStart,setCutStart]=useState<number|null>(null);const[cutEnd,setCutEnd]=useState<number|null>(null);
  const timelineRef=useRef<HTMLDivElement>(null);const audioRef=useRef<HTMLAudioElement>(null);const dragRef=useRef<{id:string;pointerX:number;start:number}|null>(null);
- const total=Math.max(8,...clips.map(c=>c.start+Math.max(0,c.duration-c.trimStart-c.trimEnd)/c.speed+1));
- const scale=100*zoom;const timelineWidth=Math.max(1100,total*scale);const selectedClip=clips.find(c=>c.id===selected);
+ const validClips=clips.filter((c): c is AudioClip => !!c && typeof c.id === "string" && c.blob instanceof Blob);
+ const total=Math.max(8,...validClips.map(c=>c.start+Math.max(0,c.duration-c.trimStart-c.trimEnd)/c.speed+1));
+ const scale=100*zoom;const timelineWidth=Math.max(1100,total*scale);const selectedClip=validClips.find(c=>c.id===selected);
  useEffect(()=>()=>{if(previewUrl)URL.revokeObjectURL(previewUrl)},[previewUrl]);
  const add=async(blob:Blob,name:string,source:AudioClip["source"]="upload")=>{
-  try{const [duration,waveform]=await Promise.all([durationOf(blob),waveformOf(blob)]);const clip:AudioClip={id:freshId(),name,blob,start:clips.length?Math.max(...clips.map(c=>c.start+Math.max(0,c.duration-c.trimStart-c.trimEnd)/c.speed)):0,trimStart:0,trimEnd:0,duration,volume:1,speed:1,effect:"none",fadeIn:0,fadeOut:0,track:clips.length,waveform,source};setClips(v=>[...v,clip]);setSelected(clip.id);setError("");}
+  try{const [duration,waveform]=await Promise.all([durationOf(blob),waveformOf(blob)]);const clip:AudioClip={id:freshId(),name,blob,start:validClips.length?Math.max(...validClips.map(c=>c.start+Math.max(0,c.duration-c.trimStart-c.trimEnd)/c.speed)):0,trimStart:0,trimEnd:0,duration,volume:1,speed:1,effect:"none",fadeIn:0,fadeOut:0,track:clips.length,waveform,source};setClips(v=>[...v,clip]);setSelected(clip.id);setError("");}
   catch(e){setError(e instanceof Error?e.message:"לא ניתן לקרוא את קובץ השמע");}
  };
- const update=(id:string,p:Partial<AudioClip>)=>setClips(v=>v.map(c=>c.id===id?{...c,...p}:c));
- const remove=(id:string)=>{setClips(v=>v.filter(c=>c.id!==id));if(selected===id)setSelected(null)};
+ const update=(id:string,p:Partial<AudioClip>)=>setClips(v=>v.filter((c): c is AudioClip => !!c && typeof c.id === "string").map(c=>c.id===id?{...c,...p}:c));
+ const remove=(id:string)=>{setClips(v=>v.filter((c): c is AudioClip => !!c && typeof c.id === "string" && c.id!==id));if(selected===id)setSelected(null)};
  const upload=(e:React.ChangeEvent<HTMLInputElement>)=>{const files=Array.from(e.target.files||[]);files.forEach(f=>void add(f,f.name,"upload"));e.target.value="";};
  const addNarration=(t:typeof store.tracks[number])=>{void add(t.blob,t.title,"narration");setShowNarrations(false)};
  const generate=()=>run("music",async()=>{
@@ -36,7 +37,7 @@ export default function AudioEditor(){
    if(!plan.notes.length)throw new Error("Gemini לא החזיר תווים תקינים");const blob=await renderMusic(plan);await add(blob,"מוזיקת Gemini · WAV","music");return plan;
   }catch(err){const msg=err instanceof Error?err.message:"שגיאה לא ידועה";console.error("[VoiceMaster][Music generation]",err);setError(msg);throw err;}
  },()=>{});
- const renderPreview=async(download=false)=>{if(!clips.length)return;setBusy(true);setError("");try{const mixed=await exportMix(clips.map(c=>({...c,volume:c.volume*master})));const url=URL.createObjectURL(mixed);setPreviewUrl(old=>{if(old)URL.revokeObjectURL(old);return url;});if(download){const a=document.createElement("a");a.href=url;a.download="voicemaster-edit.wav";a.click();}else setTimeout(()=>audioRef.current?.play().catch(()=>{}),100);}catch(e){setError(e instanceof Error?e.message:"לא ניתן ליצור תצוגה מקדימה");}finally{setBusy(false);}};
+ const renderPreview=async(download=false)=>{if(!clips.length)return;setBusy(true);setError("");try{const mixed=await exportMix(validClips.map(c=>({...c,volume:c.volume*master})));const url=URL.createObjectURL(mixed);setPreviewUrl(old=>{if(old)URL.revokeObjectURL(old);return url;});if(download){const a=document.createElement("a");a.href=url;a.download="voicemaster-edit.wav";a.click();}else setTimeout(()=>audioRef.current?.play().catch(()=>{}),100);}catch(e){setError(e instanceof Error?e.message:"לא ניתן ליצור תצוגה מקדימה");}finally{setBusy(false);}};
  const addSfx=async(name:string)=>{try{setBusy(true);const blob=await createSoundEffect(name);await add(blob,name,"effect");}catch(e){setError(e instanceof Error?e.message:"לא ניתן ליצור אפקט");}finally{setBusy(false);}};
  const timeAt=(clientX:number)=>{const rect=timelineRef.current?.getBoundingClientRect();return rect?Math.max(0,(clientX-rect.left)/scale):0;};
  const cut=()=>{if(!selectedClip||cutStart===null||cutEnd===null){setError("בחרו קובץ וסמנו טווח על ציר הזמן לחיתוך.");return;}const a=Math.min(cutStart,cutEnd),b=Math.max(cutStart,cutEnd);if(b-a<.04){setError("סמנו טווח חיתוך רחב יותר.");return;}
@@ -49,8 +50,8 @@ export default function AudioEditor(){
  };
  const startDrag=(e:React.MouseEvent<HTMLDivElement>,c:AudioClip)=>{if(cutMode)return;e.preventDefault();setSelected(c.id);dragRef.current={id:c.id,pointerX:e.clientX,start:c.start};const move=(ev:MouseEvent)=>{if(!dragRef.current)return;const delta=(ev.clientX-dragRef.current.pointerX)/scale;setClips(v=>v.map(x=>x.id===dragRef.current!.id?{...x,start:Math.max(0,dragRef.current!.start+delta)}:x));};const up=()=>{dragRef.current=null;window.removeEventListener("mousemove",move);window.removeEventListener("mouseup",up);};window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);};
  const beginCut=(e:React.MouseEvent<HTMLDivElement>)=>{if(!cutMode)return;const t=timeAt(e.clientX);setCutStart(t);setCutEnd(t);const move=(ev:MouseEvent)=>setCutEnd(timeAt(ev.clientX));const up=()=>{window.removeEventListener("mousemove",move);window.removeEventListener("mouseup",up);};window.addEventListener("mousemove",move);window.addEventListener("mouseup",up);};
- const Waveform=({clip}:{clip:AudioClip})=><svg viewBox="0 0 240 34" preserveAspectRatio="none" className="pointer-events-none mt-1 h-8 w-full opacity-95">{(clip.waveform||[]).map((v,i)=><rect key={i} x={i} y={17-Math.max(1,v*16)} width=".72" height={Math.max(2,v*32)} rx=".25" fill={clip.source==="music"?"#7dd3fc":clip.source==="narration"?"#a7f3d0":clip.source==="effect"?"#fda4af":"#c4b5fd"}/>)}</svg>;
- const clipFiles=useMemo(()=>clips.map((c,i)=>({...c,displayIndex:i+1})),[clips]);
+ const Waveform=({clip}:{clip:AudioClip})=><svg viewBox="0 0 600 44" preserveAspectRatio="none" className="pointer-events-none mt-1 h-10 w-full opacity-95"><line x1="0" y1="22" x2="600" y2="22" stroke="rgba(255,255,255,.25)" strokeWidth=".8"/>{(clip.waveform||[]).map((v,i)=>{const peak=Math.max(1.2,v*20),x=i*600/Math.max(1,clip.waveform.length);return <rect key={i} x={x} y={22-peak} width={Math.max(.8,600/Math.max(1,clip.waveform.length)-.7)} height={peak*2} rx=".45" fill={clip.source==="music"?"#70c7ed":clip.source==="narration"?"#65d6a2":clip.source==="effect"?"#f58c9a":"#b39cf8"}/>})}</svg>;
+ const clipFiles=useMemo(()=>validClips.map((c,i)=>({...c,displayIndex:i+1})),[validClips]);
  return <section className="mx-auto max-w-[1500px] space-y-5">
  <div><p className="text-xs font-bold uppercase tracking-[.18em] text-brand">Audio Studio</p><h1 className="font-display text-3xl font-black text-ink">סטודיו עריכת אודיו</h1><p className="mt-2 text-sm text-mute">עורך רב־ערוצי: גרירה, חיתוך, גלי קול, אפקטים, השמעה וייצוא WAV.</p></div>
  <div className="card rounded-[2rem] p-3 sm:p-5">
