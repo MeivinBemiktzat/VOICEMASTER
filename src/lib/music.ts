@@ -32,5 +32,34 @@ export function planToMidi(plan:MusicPlan){
  return new Blob([new Uint8Array(bytes)],{type:"audio/midi"});
 }
 function hash(s:string){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
-export async function renderMusic(plan:MusicPlan,durationSec?:number){const duration=Math.max(8,durationSec||plan.length||30);const ctx=new OfflineAudioContext(2,44100*Math.ceil(duration),44100);for(const n of plan.notes){const osc=ctx.createOscillator();const gain=ctx.createGain();osc.type=n.instrument.includes("piano")?"triangle":n.instrument.includes("bass")?"sine":n.instrument.includes("drum")?"square":"sawtooth";osc.frequency.value=freq(n.note);const start=Math.max(0,n.start),end=Math.min(duration,start+n.duration);gain.gain.setValueAtTime(0, start);gain.gain.linearRampToValueAtTime(Math.min(.16,n.velocity/1000),start+.02);gain.gain.linearRampToValueAtTime(0,end);osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(end+.03);}const rendered=await ctx.startRendering();return audioBufferToWav(rendered);}
+export async function renderMusic(plan:MusicPlan,durationSec?:number){
+ const duration=Math.max(8,Math.min(180,durationSec||plan.length||30));
+ const rate=44100,ctx=new OfflineAudioContext(2,rate*Math.ceil(duration),rate);
+ const profiles:Record<string,{wave:OscillatorType;level:number;filter?:number;attack:number;release:number}>={
+  piano:{wave:"triangle",level:.12,filter:2600,attack:.012,release:.22},
+  bass:{wave:"sine",level:.18,filter:500,attack:.025,release:.12},
+  strings:{wave:"sawtooth",level:.055,filter:1400,attack:.18,release:.35},
+  synth:{wave:"sawtooth",level:.065,filter:1800,attack:.05,release:.2},
+  flute:{wave:"sine",level:.12,filter:1900,attack:.08,release:.18},
+  guitar:{wave:"triangle",level:.1,filter:2200,attack:.008,release:.16},
+  drum:{wave:"square",level:.055,filter:700,attack:.002,release:.08},
+  bell:{wave:"sine",level:.1,filter:3200,attack:.002,release:.4}
+ };
+ for(const n of plan.notes||[]){
+  const start=Math.max(0,n.start),end=Math.min(duration,start+Math.max(.03,n.duration));
+  if(start>=duration||end<=start||!Number.isFinite(n.note))continue;
+  const p=profiles[n.instrument]||profiles.synth;
+  const osc=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
+  osc.type=p.wave;osc.frequency.value=freq(Math.max(24,Math.min(108,n.note)));
+  filter.type="lowpass";filter.frequency.value=p.filter||1800;
+  const level=p.level*Math.max(.05,Math.min(1.25,(n.velocity||45)/70));
+  gain.gain.setValueAtTime(0,start);
+  gain.gain.linearRampToValueAtTime(level,start+Math.min(p.attack,Math.max(.005,(end-start)/3)));
+  const releaseStart=Math.max(start+.005,end-Math.min(p.release,(end-start)*.35));
+  gain.gain.setValueAtTime(level,releaseStart);
+  gain.gain.exponentialRampToValueAtTime(.0001,Math.max(releaseStart+.005,end));
+  osc.connect(filter);filter.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(Math.min(duration,end+.01));
+ }
+ return audioBufferToWav(await ctx.startRendering());
+}
 function audioBufferToWav(b:AudioBuffer){const ch=b.numberOfChannels,len=b.length*ch*2+44;const buf=new ArrayBuffer(len),v=new DataView(buf);const ws=(o:number,s:string)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};ws(0,"RIFF");v.setUint32(4,len-8,true);ws(8,"WAVE");ws(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);v.setUint32(24,b.sampleRate,true);v.setUint32(28,b.sampleRate*ch*2,true);v.setUint16(32,ch*2,true);v.setUint16(34,16,true);ws(36,"data");v.setUint32(40,len-44,true);let o=44;for(let i=0;i<b.length;i++)for(let c=0;c<ch;c++){let s=Math.max(-1,Math.min(1,b.getChannelData(c)[i]));v.setInt16(o,s<0?s*32768:s*32767,true);o+=2;}return new Blob([buf],{type:"audio/wav"});}
