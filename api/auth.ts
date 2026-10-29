@@ -2,7 +2,8 @@ import type { VercelRequest,VercelResponse } from "@vercel/node";
 import { randomUUID,scryptSync,randomBytes,timingSafeEqual,createHmac } from "node:crypto";
 import { getJson,putJson,putObject,removeObject,profileKey,avatarKey,usersKey,canonicalUsername,displayUsername,effectiveRole,seededAdminUsername,getObject } from "./lib/storage.js";
 
-export const config = { api: { bodyParser: false } };\n\ntype UserIndex=Record<string,{userId:string;salt:string;hash:string}>;
+export const config = { api: { bodyParser: false } };\n\nexport const config = { api: { bodyParser: false } };
+type UserIndex=Record<string,{userId:string;salt:string;hash:string}>;
 type Profile={userId:string;username:string;createdAt:string;updatedAt:string;role?:"user"|"admin";avatarKey?:string;avatarContentType?:string};
 const secret=process.env.VOICEMASTER_SESSION_SECRET!;
 function send(res:VercelResponse,status:number,body:unknown){return res.status(status).json(body);}
