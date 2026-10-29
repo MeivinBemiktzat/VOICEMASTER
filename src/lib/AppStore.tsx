@@ -96,7 +96,7 @@ export function AppStoreProvider({ children }: { children: ReactNode }) {
 
   const refreshTracks = useCallback(async () => {
     const local = user ? await getLocalTracks(user.userId) : [];
-    const resolved = local.map((track) => ({
+    const safeLocal = local.filter((track) => !!track && typeof track.id === "string" && !!track.blob);\n    const resolved = safeLocal.map((track) => ({
       ...track,
       url: URL.createObjectURL(track.blob),
     }));
