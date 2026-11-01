@@ -5,7 +5,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
-import { getVoicesForTtsModel, searchVoices } from "../lib/catalogs";
+import { getVoicesForTtsModel, searchVoices, localizeVoiceOptions } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
 import { geminiTextCall, geminiPodcastAudioCall, getSelectedTtsModel, fetchGeminiVoiceLibrary } from "../lib/gemini";
 import TrackCard from "../components/TrackCard";
@@ -31,7 +31,7 @@ export default function Podcast() {
   const [length, setLength] = useState(LENGTH_OPTIONS[1].value);
   const [script, setScript] = useState("");
 
-  const [voices, setVoices] = useState(getVoicesForTtsModel(getSelectedTtsModel()));
+  const [voices, setVoices] = useState(localizeVoiceOptions(getVoicesForTtsModel(getSelectedTtsModel())));
   const [voicesLoading, setVoicesLoading] = useState(false);
   const [voiceSearch, setVoiceSearch] = useState("");
   const [voiceGender, setVoiceGender] = useState<"all" | "male" | "female">("all");
@@ -43,7 +43,7 @@ export default function Podcast() {
   useEffect(() => {
     let active = true;
     if (!store.currentApiKey) {
-      setVoices(getVoicesForTtsModel(ttsModel));
+      setVoices(localizeVoiceOptions(getVoicesForTtsModel(ttsModel)));
       return () => { active = false; };
     }
     setVoicesLoading(true);
@@ -54,7 +54,7 @@ export default function Podcast() {
           ? loaded
           : loaded.filter((voice) => getVoicesForTtsModel(ttsModel).some((preset) => preset.id === voice.id));
         if (!available.length) return;
-        setVoices(available);
+        setVoices(localizeVoiceOptions(available));
         const femaleVoice = available.find((voice) => voice.gender === "female");
         const maleVoice = available.find((voice) => voice.gender === "male");
         if (femaleVoice) setVoiceA(femaleVoice.id);
