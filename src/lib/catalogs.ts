@@ -88,3 +88,7 @@ export const toneChoices =
 export function getVoicesForTtsModel(model: string): VoiceOption[] {
   return voicesByTtsModel[model] || voiceCatalog;
 }
+
+
+/** מספר הקולות הייחודיים בקטלוג. */
+export const uniqueVoiceCount = voiceCatalog.length;
