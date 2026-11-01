@@ -89,7 +89,7 @@ export async function geminiAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const model = getSelectedTtsModel();
-  const chunks = splitTextForSpeech(text, model.startsWith("gemini-3.8-") ? 1400 : 650);
+  const chunks = splitTextForSpeech(text, model.startsWith("gemini-3.8-") ? 700 : 180);
   const audio: Blob[] = [];
   for (const chunk of chunks) {
     if (model.startsWith("gemini-3.8-")) {
@@ -102,10 +102,26 @@ export async function geminiAudioCall(
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
         },
       }, opts);
-      audio.push(extractAudio(data));
+      const segment = extractAudio(data);
+      console.info("[VoiceMaster][TTS]", JSON.stringify({
+        model,
+        chunk: audio.length + 1,
+        totalChunks: chunks.length,
+        inputCharacters: chunk.length,
+        audioBytes: segment.size,
+        finishReason: data?.candidates?.[0]?.finishReason || "unknown",
+      }));
+      audio.push(segment);
     }
   }
-  return { blob: await joinWavSegments(audio) };
+  const blob = await joinWavSegments(audio);
+  console.info("[VoiceMaster][TTS]", JSON.stringify({
+    model,
+    totalChunks: chunks.length,
+    inputCharacters: text.length,
+    finalAudioBytes: blob.size,
+  }));
+  return { blob };
 }
 
 /** פודקאסט: שני דוברים, לכל אחד קול משלו. שורות התסריט צריכות להתחיל בשם הדובר. */
