@@ -6,36 +6,36 @@ import type { VoiceOption, StyleOption } from "./types";
  * הערך id נשלח ל-API; name ו-description מיועדים לתצוגה בעברית.
  */
 export const voiceCatalog: VoiceOption[] = [
-  { id: "Zephyr", name: "זפיר", description: "בהיר" },
-  { id: "Puck", name: "פאק", description: "נמרץ" },
-  { id: "Charon", name: "קארון", description: "אינפורמטיבי" },
-  { id: "Kore", name: "קורי", description: "תקיף" },
-  { id: "Fenrir", name: "פנריר", description: "נלהב" },
-  { id: "Leda", name: "לדה", description: "צעיר" },
-  { id: "Orus", name: "אורוס", description: "תקיף" },
-  { id: "Aoede", name: "אואדה", description: "קליל" },
-  { id: "Callirrhoe", name: "קלירואה", description: "נינוח" },
-  { id: "Autonoe", name: "אוטונואה", description: "בהיר" },
-  { id: "Enceladus", name: "אנקלדוס", description: "נושם" },
-  { id: "Iapetus", name: "יאפטוס", description: "ברור" },
-  { id: "Umbriel", name: "אומבריאל", description: "נינוח" },
-  { id: "Algieba", name: "אלג'יבה", description: "חלק" },
-  { id: "Despina", name: "דספינה", description: "חלק" },
-  { id: "Erinome", name: "ארינומה", description: "ברור" },
-  { id: "Algenib", name: "אלג'ניב", description: "מחוספס" },
-  { id: "Rasalgethi", name: "ראסאלגטי", description: "אינפורמטיבי" },
-  { id: "Laomedeia", name: "לאומדיה", description: "נמרץ" },
-  { id: "Achernar", name: "אחרנר", description: "רך" },
-  { id: "Alnilam", name: "אלנילם", description: "תקיף" },
-  { id: "Schedar", name: "שדר", description: "מאוזן" },
-  { id: "Gacrux", name: "גקרוקס", description: "בוגר" },
-  { id: "Pulcherrima", name: "פולכרימה", description: "החלטי" },
-  { id: "Achird", name: "אכירד", description: "ידידותי" },
-  { id: "Zubenelgenubi", name: "זובנאלגנובי", description: "אגבי" },
-  { id: "Vindemiatrix", name: "וינדמיאטריקס", description: "עדין" },
-  { id: "Sadachbia", name: "סדחביה", description: "תוסס" },
-  { id: "Sadaltager", name: "סדלטגר", description: "מלומד" },
-  { id: "Sulafat", name: "סולפאט", description: "חמים" },
+  { id: "Zephyr", name: "משה", description: "בהיר", gender: "male" },
+  { id: "Puck", name: "אהרון", description: "נמרץ", gender: "male" },
+  { id: "Charon", name: "דן", description: "אינפורמטיבי", gender: "male" },
+  { id: "Kore", name: "יוסף", description: "תקיף", gender: "male" },
+  { id: "Fenrir", name: "איתן", description: "נלהב", gender: "male" },
+  { id: "Leda", name: "נועה", description: "צעיר", gender: "female" },
+  { id: "Orus", name: "אורי", description: "תקיף", gender: "male" },
+  { id: "Aoede", name: "מיכל", description: "קליל", gender: "female" },
+  { id: "Callirrhoe", name: "יעל", description: "נינוח", gender: "female" },
+  { id: "Autonoe", name: "תמר", description: "בהיר", gender: "female" },
+  { id: "Enceladus", name: "אליהו", description: "נושם", gender: "male" },
+  { id: "Iapetus", name: "שמואל", description: "ברור", gender: "male" },
+  { id: "Umbriel", name: "רחל", description: "נינוח", gender: "female" },
+  { id: "Algieba", name: "דוד", description: "חלק", gender: "male" },
+  { id: "Despina", name: "שרה", description: "חלק", gender: "female" },
+  { id: "Erinome", name: "אביגיל", description: "ברור", gender: "female" },
+  { id: "Algenib", name: "יצחק", description: "מחוספס", gender: "male" },
+  { id: "Rasalgethi", name: "בנימין", description: "אינפורמטיבי", gender: "male" },
+  { id: "Laomedeia", name: "שירה", description: "נמרץ", gender: "female" },
+  { id: "Achernar", name: "לאה", description: "רך", gender: "female" },
+  { id: "Alnilam", name: "שלמה", description: "תקיף", gender: "male" },
+  { id: "Schedar", name: "מרים", description: "מאוזן", gender: "female" },
+  { id: "Gacrux", name: "יהודה", description: "בוגר", gender: "male" },
+  { id: "Pulcherrima", name: "אסתר", description: "החלטי", gender: "female" },
+  { id: "Achird", name: "נחום", description: "ידידותי", gender: "male" },
+  { id: "Zubenelgenubi", name: "רבקה", description: "אגבי", gender: "female" },
+  { id: "Vindemiatrix", name: "חנה", description: "עדין", gender: "female" },
+  { id: "Sadachbia", name: "יונתן", description: "תוסס", gender: "male" },
+  { id: "Sadaltager", name: "גדעון", description: "מלומד", gender: "male" },
+  { id: "Sulafat", name: "דבורה", description: "חמים", gender: "female" },
 ];
 
 /** הקטלוג הרשמי זהה לשני מודלי Gemini 3.8 TTS ולמודלי TTS קודמים המתועדים. */
@@ -92,3 +92,15 @@ export function getVoicesForTtsModel(model: string): VoiceOption[] {
 
 /** מספר הקולות הייחודיים בקטלוג. */
 export const uniqueVoiceCount = voiceCatalog.length;
+
+/** חיפוש קולות לפי שם עברי, מזהה מקורי, סגנון, מגדר וגובה קול. */
+export function searchVoices(voices: VoiceOption[], query: string, gender: "male" | "female" | "all" = "all"): VoiceOption[] {
+  const q = query.trim().toLocaleLowerCase("he");
+  return voices.filter((voice) => {
+    const genderMatches = gender === "all" || voice.gender === gender || !voice.gender;
+    if (!genderMatches) return false;
+    if (!q) return true;
+    return [voice.name, voice.id, voice.description, voice.pitch || "", voice.gender === "male" ? "גברי" : voice.gender === "female" ? "נשי" : "ניטרלי"]
+      .join(" ").toLocaleLowerCase("he").includes(q);
+  });
+}
