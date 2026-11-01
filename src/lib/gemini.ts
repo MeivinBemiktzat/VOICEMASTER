@@ -3,7 +3,11 @@ import { prompts } from "./prompts";
 
 /** מודלים: שנו כאן אם Google מחליפה שמות. הערכים זהים לאתר המקורי. */
 export const MODEL_TEXT = "gemini-3.5-flash-lite";
-export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";\n\nexport function getSelectedTtsModel(): string {\n  return selectedModel("voicemaster_tts_model", MODEL_AUDIO);\n}
+export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";
+
+export function getSelectedTtsModel(): string {
+  return selectedModel("voicemaster_tts_model", MODEL_AUDIO);
+}
 
 function selectedModel(storageKey: string, fallback: string): string {
   try { return localStorage.getItem(storageKey) || fallback; } catch { return fallback; }
@@ -37,7 +41,10 @@ export function cleanGeneratedText(text: string): string {
     .replace(/^[\s`*_#>-]+/gm, "")
     .replace(/[*#`]/g, "")
     .replace(/^\s*\d+[.)]\s*/gm, "")
-    .replace(/\n{3,}/g, "\n\n")
+    .replace(/
+{3,}/g, "
+
+")
     .trim();
 }
 
