@@ -1,4 +1,4 @@
-import type { ApiCallOptions, SpeakerConfig } from "./types";
+import type { ApiCallOptions, SpeakerConfig, VoiceOption } from "./types";
 import { prompts } from "./prompts";
 
 /** מודלים: שנו כאן אם Google מחליפה שמות. הערכים זהים לאתר המקורי. */
@@ -197,4 +197,105 @@ function pcmToWav(base64: string, rate: number): Blob {
   v.setUint32(40, bytes.length, true);
 
   return new Blob([header, bytes], { type: "audio/wav" });
+}
+
+
+/**
+ * טוען את ספריית הקולות המורחבת של Google.
+ * GET /v1beta/voices מחזיר metadata כולל gender, pitch ותיאור.
+ */
+export async function fetchGeminiVoiceLibrary(opts: ApiCallOptions): Promise<VoiceOption[]> {
+  const keys = [...new Set([opts.currentApiKey, ...opts.savedApiKeys].filter(Boolean))];
+  if (!keys.length) throw new ApiCallError("Missing API Key", "לא הוגדר מפתח API.");
+
+  let lastError: Error | null = null;
+  for (const key of keys) {
+    const collected: any[] = [];
+    let pageToken = "";
+    try {
+      do {
+        const params = new URLSearchParams({ page_size: "1000", type: "prebuilt" });
+        if (pageToken) params.set("page_token", pageToken);
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/voices?${params.toString()}`,
+          { headers: { "x-goog-api-key": key } }
+        );
+        const data = await response.json();
+        if (!response.ok) {
+          lastError = new Error(data?.error?.message || `Voice library request failed: ${response.status}`);
+          break;
+        }
+        collected.push(...(data.voices || []));
+        pageToken = data.nextPageToken || "";
+      } while (pageToken);
+
+      if (collected.length) {
+        return collected.map((voice) => {
+          const id = String(voice.id || voice.name || "").split("/").pop();
+          const rawDescription = String(voice.description || "");
+          const genderValue = String(voice.gender || "").toLowerCase();
+          return {
+            id,
+            name: hebrewVoiceName(String(voice.displayName || id)),
+            description: hebrewVoiceStyle(rawDescription),
+            gender: genderValue === "male" || genderValue === "female" ? genderValue : "neutral",
+            pitch: voice.pitch || undefined,
+          } satisfies VoiceOption;
+        }).filter((voice) => voice.id);
+      }
+    } catch (error) {
+      lastError = error as Error;
+    }
+  }
+  throw new ApiCallError(
+    lastError?.message || "Voice library unavailable",
+    "לא ניתן לטעון כרגע את ספריית הקולות של Google."
+  );
+}
+
+const hebrewVoiceNames: Record<string, string> = {
+  Fola: "פולה", Bodi: "בודי", Lumi: "לומי", Sola: "סולה",
+  Koda: "קודה", Nika: "ניקה", Tavi: "טאבי", Kira: "קירה",
+  Ludo: "לודו", Mako: "מאקו", Brio: "בריו", Jori: "ג'ורי",
+  Rami: "ראמי", Enzo: "אנזו", Riko: "ריקו", Sami: "סאמי",
+  Gero: "ג'רו", Neno: "ננו", Olin: "אולין", Daro: "דארו",
+  Hali: "האלי", Arlo: "ארלו", Cleo: "קליאו", Finn: "פין",
+  Enya: "אניה", Jett: "ג'ט", Knox: "נוקס", Cruz: "קרוז",
+  Elio: "אליו", Tova: "טובה",
+  Zephyr: "זפיר", Puck: "פאק", Charon: "קארון", Kore: "קורי",
+  Fenrir: "פנריר", Leda: "לדה", Orus: "אורוס", Aoede: "אואדה",
+  Callirrhoe: "קלירואה", Autonoe: "אוטונואה", Enceladus: "אנקלדוס",
+  Iapetus: "יאפטוס", Umbriel: "אומבריאל", Algieba: "אלג'יבה",
+  Despina: "דספינה", Erinome: "ארינומה", Algenib: "אלג'ניב",
+  Rasalgethi: "ראסאלגטי", Laomedeia: "לאומדיה", Achernar: "אחרנר",
+  Alnilam: "אלנילם", Schedar: "שדר", Gacrux: "גקרוקס",
+  Pulcherrima: "פולכרימה", Achird: "אכירד", Zubenelgenubi: "זובנאלגנובי",
+  Vindemiatrix: "וינדמיאטריקס", Sadachbia: "סדחביה",
+  Sadaltager: "סדלטגר", Sulafat: "סולפאט",
+};
+
+function hebrewVoiceName(name: string): string {
+  if (hebrewVoiceNames[name]) return hebrewVoiceNames[name];
+  const map: Record<string, string> = {
+    a: "א", b: "ב", c: "ק", d: "ד", e: "י", f: "פ", g: "ג", h: "ה",
+    i: "י", j: "ג'", k: "ק", l: "ל", m: "מ", n: "נ", o: "ו", p: "פ",
+    q: "ק", r: "ר", s: "ס", t: "ט", u: "ו", v: "ו", w: "ו", x: "קס",
+    y: "י", z: "ז",
+  };
+  return name.toLowerCase().split("").map((letter) => map[letter] || letter).join("");
+}
+
+function hebrewVoiceStyle(description: string): string {
+  const value = description.toLowerCase();
+  const styles: Array<[string[], string]> = [
+    [["quiet", "soft"], "שקט"], [["warm", "velvety"], "חמים"],
+    [["gentle", "comforting", "soothing"], "עדין"], [["direct"], "ישיר"],
+    [["clear", "crisp", "precise"], "ברור"], [["confident"], "בטוח"],
+    [["energetic", "upbeat", "lively"], "נמרץ"], [["cool"], "קריר"],
+    [["friendly", "approachable"], "ידידותי"], [["calm", "relaxed"], "רגוע"],
+    [["professional", "poised"], "מקצועי"], [["helpful"], "מועיל"],
+    [["colorful"], "ססגוני"], [["empathetic"], "אמפתי"],
+    [["resonant"], "מהדהד"], [["light"], "קליל"],
+  ];
+  return styles.find(([words]) => words.some((word) => value.includes(word)))?.[1] || "ייחודי";
 }
