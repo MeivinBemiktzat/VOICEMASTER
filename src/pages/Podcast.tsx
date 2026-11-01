@@ -5,9 +5,9 @@ import { useAuth } from "../lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
-import { voiceCatalog } from "../lib/catalogs";
+import { getVoicesForTtsModel } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
-import { geminiTextCall, geminiPodcastAudioCall } from "../lib/gemini";
+import { geminiTextCall, geminiPodcastAudioCall, getSelectedTtsModel } from "../lib/gemini";
 import TrackCard from "../components/TrackCard";
 
 const LENGTH_OPTIONS = [
@@ -30,6 +30,8 @@ export default function Podcast() {
   const [voiceB, setVoiceB] = useState("Zephyr");
   const [length, setLength] = useState(LENGTH_OPTIONS[1].value);
   const [script, setScript] = useState("");
+
+  const voices = getVoicesForTtsModel(getSelectedTtsModel());
 
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
 
@@ -121,14 +123,14 @@ export default function Podcast() {
                 <label className="label">שם דובר א׳</label>
                 <input value={nameA} onChange={(e) => setNameA(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  {voiceCatalog.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
+                  {voices.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
                 </select>
               </div>
               <div>
                 <label className="label">שם דובר ב׳</label>
                 <input value={nameB} onChange={(e) => setNameB(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceB} onChange={(e) => setVoiceB(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  {voiceCatalog.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
+                  {voices.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
                 </select>
               </div>
             </div>
