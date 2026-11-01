@@ -39,7 +39,10 @@ export default function Podcast() {
 
   useEffect(() => {
     let active = true;
-    if (!store.currentApiKey) return;
+    if (!ttsModel.startsWith("gemini-3.8-") || !store.currentApiKey) {
+      setVoices(getVoicesForTtsModel(ttsModel));
+      return () => { active = false; };
+    }
     setVoicesLoading(true);
     fetchGeminiVoiceLibrary(apiOpts)
       .then((loaded) => {
@@ -137,7 +140,7 @@ export default function Podcast() {
           </div>
 
           <div className="card rounded-2xl p-4 sm:rounded-[2rem] sm:p-6">
-            <h3 className="mb-4 text-sm font-black text-ink sm:text-base">2. הדוברים</h3>
+            <h3 className="mb-4 text-sm font-black text-ink sm:text-base">2. הדוברים {voicesLoading ? "· טוען ספריית קולות..." : ""}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">שם דובר א׳</label>
@@ -145,12 +148,12 @@ export default function Podcast() {
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
                   <>
                     <optgroup label="קולות גבריים">
-                      {voices.filter((v) => v.gender === "male" || v.gender === "neutral").map((v) => (
+                      {voices.filter((v) => v.gender === "male").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
                     <optgroup label="קולות נשיים">
-                      {voices.filter((v) => v.gender === "female" || v.gender === "neutral").map((v) => (
+                      {voices.filter((v) => v.gender === "female").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
@@ -166,9 +169,23 @@ export default function Podcast() {
                 <label className="label">שם דובר ב׳</label>
                 <input value={nameB} onChange={(e) => setNameB(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceB} onChange={(e) => setVoiceB(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  {voices.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
-                  ))}
+                  <>
+                    <optgroup label="קולות גבריים">
+                      {voices.filter((v) => v.gender === "male").map((v) => (
+                        <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="קולות נשיים">
+                      {voices.filter((v) => v.gender === "female").map((v) => (
+                        <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="קולות ניטרליים / לא מסווגים">
+                      {voices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                        <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                      ))}
+                    </optgroup>
+                  </>
                 </select>
               </div>
             </div>
