@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, Podcast as PodcastIcon, Inbox } from "lucide-react";
 import { useAppStore } from "../lib/AppStore";
 import { useAuth } from "../lib/AuthContext";
@@ -7,7 +7,7 @@ import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
 import { getVoicesForTtsModel } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
-import { geminiTextCall, geminiPodcastAudioCall, getSelectedTtsModel } from "../lib/gemini";
+import { geminiTextCall, geminiPodcastAudioCall, getSelectedTtsModel, fetchGeminiVoiceLibrary } from "../lib/gemini";
 import TrackCard from "../components/TrackCard";
 
 const LENGTH_OPTIONS = [
@@ -31,9 +31,29 @@ export default function Podcast() {
   const [length, setLength] = useState(LENGTH_OPTIONS[1].value);
   const [script, setScript] = useState("");
 
-  const voices = getVoicesForTtsModel(getSelectedTtsModel());
-
+  const [voices, setVoices] = useState(getVoicesForTtsModel(getSelectedTtsModel()));
+  const [voicesLoading, setVoicesLoading] = useState(false);
+  const ttsModel = getSelectedTtsModel();
+  const savedKeysKey = store.savedApiKeys.join("|");
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
+
+  useEffect(() => {
+    let active = true;
+    if (!store.currentApiKey) return;
+    setVoicesLoading(true);
+    fetchGeminiVoiceLibrary(apiOpts)
+      .then((loaded) => {
+        if (!active || !loaded.length) return;
+        setVoices(loaded);
+        const femaleVoice = loaded.find((voice) => voice.gender === "female");
+        const maleVoice = loaded.find((voice) => voice.gender === "male");
+        if (femaleVoice) setVoiceA(femaleVoice.id);
+        if (maleVoice) setVoiceB(maleVoice.id);
+      })
+      .catch((error) => console.warn("[VoiceMaster] Voice library fallback:", error))
+      .finally(() => { if (active) setVoicesLoading(false); });
+    return () => { active = false; };
+  }, [store.currentApiKey, savedKeysKey, ttsModel]);
 
   const generateScript = () => {
     if (!topic.trim()) return showToast("הזינו נושא לפודקאסט");
@@ -123,9 +143,23 @@ export default function Podcast() {
                 <label className="label">שם דובר א׳</label>
                 <input value={nameA} onChange={(e) => setNameA(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  {voices.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
-                  ))}
+                  <>
+                    <optgroup label="קולות גבריים">
+                      {voices.filter((v) => v.gender === "male").map((v) => (
+                        <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="קולות נשיים">
+                      {voices.filter((v) => v.gender === "female").map((v) => (
+                        <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="קולות ניטרליים / לא מסווגים">
+                      {voices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                        <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                      ))}
+                    </optgroup>
+                  </>
                 </select>
               </div>
               <div>
