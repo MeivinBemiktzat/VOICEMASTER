@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Sparkles, Wand2, Loader2, Inbox } from "lucide-react";
 import { useAppStore } from "../lib/AppStore";
 import { useAuth } from "../lib/AuthContext";
@@ -26,14 +26,6 @@ export default function Narration() {
 
   const [promptInput, setPromptInput] = useState("");
   const [customStyleInput, setCustomStyleInput] = useState("");
-
-  const voices = useMemo(
-    () => [
-      { label: "קולות גבריים", options: voiceCatalog.male },
-      { label: "קולות נשיים", options: voiceCatalog.female },
-    ],
-    []
-  );
 
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
 
@@ -188,15 +180,7 @@ export default function Narration() {
                 onChange={(e) => store.setVoice(e.target.value)}
                 className="field cursor-pointer bg-soft !border-none text-xs font-bold sm:text-sm"
               >
-                {voices.map((group) => (
-                  <optgroup key={group.label} label={group.label}>
-                    {group.options.map((v, i) => (
-                      <option key={`${v.id}_${i}`} value={v.id}>
-                        {v.id} — {v.description}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
+                {voiceCatalog.map((v) => (\n                  <option key={v.id} value={v.id}>\n                    {v.name} — {v.description}\n                  </option>\n                ))}
               </select>
             </div>
             <div>
