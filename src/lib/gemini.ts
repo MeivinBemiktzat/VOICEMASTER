@@ -57,18 +57,24 @@ export async function geminiAudioCall(
   voiceName: string,
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
-  const data = await apiCall(
-    getSelectedTtsModel(),
-    {
-      contents: [{ parts: [{ text: prompts.narration(styleInstruction, text) }] }],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: { voiceConfig: getVoiceConfig(getSelectedTtsModel(), voiceName) },
+  const model = getSelectedTtsModel();
+  const chunks = splitTextForSpeech(text, 700);
+  const segments: Blob[] = [];
+  for (const chunk of chunks) {
+    const data = await apiCall(
+      model,
+      {
+        contents: [{ parts: [{ text: prompts.narration(styleInstruction, chunk) }] }],
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig: { voiceConfig: getVoiceConfig(model, voiceName) },
+        },
       },
-    },
-    opts
-  );
-  return { blob: extractAudio(data) };
+      opts
+    );
+    segments.push(extractAudio(data));
+  }
+  return { blob: await joinWavSegments(segments) };
 }
 
 /** פודקאסט: שני דוברים, לכל אחד קול משלו. שורות התסריט צריכות להתחיל בשם הדובר. */
@@ -100,101 +106,84 @@ export async function geminiPodcastAudioCall(
 }
 
 function extractAudio(data: any): Blob {
-  const part = data?.candidates?.[0]?.content?.parts?.[0];
-  const pcmData: string | undefined = part?.inlineData?.data;
-  const mimeType: string = part?.inlineData?.mimeType || "";
-  const sampleRate = parseInt(mimeType.split("rate=")[1] || "", 10) || 24000;
-  if (!pcmData) {
-    throw new ApiCallError("No audio returned", "לא התקבל קול מהשירות. נסה שוב.");
+  const parts = (data?.candidates || []).flatMap((candidate: any) => candidate?.content?.parts || []);
+  const audioParts = parts.filter((part: any) =>
+    part?.inlineData?.data && String(part.inlineData.mimeType || "").startsWith("audio/")
+  );
+  if (!audioParts.length) {
+    const reason = data?.candidates?.[0]?.finishReason || "unknown";
+    throw new ApiCallError(`No audio returned: ${reason}`, "לא התקבל אודיו מהשירות. נסה שוב.");
   }
-  return pcmToWav(pcmData, sampleRate);
+  const rate = parseInt(String(audioParts[0].inlineData.mimeType).split("rate=")[1] || "", 10) || 24000;
+  const buffers = audioParts.map((part: any) => base64ToBytes(part.inlineData.data));
+  const total = buffers.reduce((sum: number, buffer: Uint8Array) => sum + buffer.length, 0);
+  const pcm = new Uint8Array(total);
+  let offset = 0;
+  for (const buffer of buffers) { pcm.set(buffer, offset); offset += buffer.length; }
+  return pcmBytesToWav(pcm, rate);
 }
 
-/**
- * קריאה ל-API עם סבב מפתחות: מנסה את המפתח הפעיל, ואם הוא חסום/מוגבל עובר לבא.
- * 429 = המתנה של 30 שניות למפתח, 401/403 = המתנה של 5 דקות.
- */
-async function apiCall(
-  model: string,
-  payload: unknown,
-  { currentApiKey, savedApiKeys }: ApiCallOptions
-): Promise<any> {
-  if (!currentApiKey) {
-    throw new ApiCallError("Missing API Key", "לא הוגדר מפתח API.");
-  }
-
-  const availableKeys = savedApiKeys.length ? [...savedApiKeys] : [currentApiKey];
-  const orderedKeys = [currentApiKey, ...availableKeys.filter((key) => key !== currentApiKey)];
-  let lastError: ApiCallError | null = null;
-
-  for (const key of orderedKeys) {
-    const cooldownUntil = apiKeyCooldowns.get(key) || 0;
-    if (cooldownUntil > Date.now()) continue;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      if (response.ok) return data;
-      console.error("[VoiceMaster][Gemini]", { model, status: response.status, error: data?.error, keySuffix: key.slice(-4) });
-
-      const userMessage = getHebrewApiError(response.status, data?.error?.message);
-      lastError = new ApiCallError(data?.error?.message || "API request failed", userMessage, response.status);
-
-      if (response.status === 429) {
-        apiKeyCooldowns.set(key, Date.now() + 30000);
-      } else if (response.status === 401 || response.status === 403) {
-        apiKeyCooldowns.set(key, Date.now() + 300000);
-      } else {
-        throw lastError;
-      }
-    } catch (error) {
-      if (error instanceof ApiCallError) throw error;
-      const err = error as Error;
-      const userMessage =
-        err.name === "TypeError"
-          ? "אין חיבור לאינטרנט או שהדפדפן חסם את הבקשה."
-          : getHebrewApiError(undefined, err.message);
-      lastError = new ApiCallError(err.message, userMessage);
-    }
-  }
-
-  if (lastError) throw lastError;
-  throw new ApiCallError("All API keys are cooling down", "כל מפתחות ה-API בהמתנה זמנית. נסה שוב בעוד חצי דקה.");
+function base64ToBytes(value: string): Uint8Array {
+  const binary = atob(value);
+  const result = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) result[i] = binary.charCodeAt(i);
+  return result;
 }
 
-/** ממיר PCM גולמי (base64) לקובץ WAV שאפשר לנגן ולהוריד */
-function pcmToWav(base64: string, rate: number): Blob {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
+function pcmBytesToWav(pcm: Uint8Array, rate: number): Blob {
   const header = new ArrayBuffer(44);
-  const v = new DataView(header);
-  const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) v.setUint8(offset + i, str.charCodeAt(i));
+  const view = new DataView(header);
+  const write = (offset: number, value: string) => {
+    for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i));
   };
-
-  writeStr(0, "RIFF");
-  v.setUint32(4, 36 + bytes.length, true);
-  writeStr(8, "WAVE");
-  writeStr(12, "fmt ");
-  v.setUint32(16, 16, true);
-  v.setUint16(20, 1, true);
-  v.setUint16(22, 1, true);
-  v.setUint32(24, rate, true);
-  v.setUint32(28, rate * 2, true);
-  v.setUint16(32, 2, true);
-  v.setUint16(34, 16, true);
-  writeStr(36, "data");
-  v.setUint32(40, bytes.length, true);
-
-  return new Blob([header, bytes], { type: "audio/wav" });
+  write(0, "RIFF"); view.setUint32(4, 36 + pcm.length, true);
+  write(8, "WAVE"); write(12, "fmt "); view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  write(36, "data"); view.setUint32(40, pcm.length, true);
+  return new Blob([header, pcm], { type: "audio/wav" });
 }
 
+function splitTextForSpeech(input: string, maxChars: number): string[] {
+  let remaining = input.replace(/\r\n/g, "\n").trim();
+  const chunks: string[] = [];
+  while (remaining.length > maxChars) {
+    const part = remaining.slice(0, maxChars + 1);
+    let cut = Math.max(
+      part.lastIndexOf("\n\n"), part.lastIndexOf("\n"),
+      part.lastIndexOf(". "), part.lastIndexOf("! "),
+      part.lastIndexOf("? "), part.lastIndexOf("; "), part.lastIndexOf(" ")
+    );
+    if (cut < maxChars * 0.45) cut = maxChars;
+    else if (remaining[cut] === " " || remaining[cut] === "\n") cut += 1;
+    const chunk = remaining.slice(0, cut).trim();
+    if (chunk) chunks.push(chunk);
+    remaining = remaining.slice(cut).trim();
+  }
+  if (remaining) chunks.push(remaining);
+  return chunks;
+}
+
+async function joinWavSegments(segments: Blob[]): Promise<Blob> {
+  if (!segments.length) throw new ApiCallError("No audio segments", "לא נוצר אודיו.");
+  if (segments.length === 1) return segments[0];
+  const decoded = await Promise.all(segments.map(async (blob) => {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    if (bytes.length < 44) throw new ApiCallError("Invalid WAV", "התקבל קובץ אודיו לא תקין.");
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (view.getUint16(22, true) !== 1 || view.getUint16(34, true) !== 16)
+      throw new ApiCallError("Unsupported WAV encoding", "פורמט האודיו אינו נתמך.");
+    return { rate: view.getUint32(24, true), pcm: bytes.slice(44) };
+  }));
+  if (decoded.some((item) => item.rate !== decoded[0].rate))
+    throw new ApiCallError("Sample rate mismatch", "קטעי האודיו התקבלו בקצב שונה.");
+  const total = decoded.reduce((sum, item) => sum + item.pcm.length, 0);
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const item of decoded) { joined.set(item.pcm, offset); offset += item.pcm.length; }
+  return pcmBytesToWav(joined, decoded[0].rate);
+}
 
 /**
  * טוען את ספריית הקולות המורחבת של Google.
