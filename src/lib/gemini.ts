@@ -5,6 +5,10 @@ import { prompts } from "./prompts";
 export const MODEL_TEXT = "gemini-3.5-flash-lite";
 export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";
 
+function selectedModel(storageKey: string, fallback: string): string {
+  try { return localStorage.getItem(storageKey) || fallback; } catch { return fallback; }
+}
+
 const apiKeyCooldowns = new Map<string, number>();
 
 export class ApiCallError extends Error {
@@ -38,7 +42,7 @@ export function cleanGeneratedText(text: string): string {
 }
 
 export async function geminiTextCall(prompt: string, opts: ApiCallOptions): Promise<string> {
-  const data = await apiCall(MODEL_TEXT, { contents: [{ parts: [{ text: prompt }] }] }, opts);
+  const data = await apiCall(selectedModel("voicemaster_text_model", MODEL_TEXT), { contents: [{ parts: [{ text: prompt }] }] }, opts);
   const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   return cleanGeneratedText(result || "");
 }
@@ -51,7 +55,7 @@ export async function geminiAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const data = await apiCall(
-    MODEL_AUDIO,
+    selectedModel("voicemaster_tts_model", MODEL_AUDIO),
     {
       contents: [{ parts: [{ text: prompts.narration(styleInstruction, text) }] }],
       generationConfig: {
