@@ -67,7 +67,7 @@ export async function geminiAudioCall(
       contents: [{ parts: [{ text: prompts.narration(styleInstruction, text) }] }],
       generationConfig: {
         responseModalities: ["AUDIO"],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
+        speechConfig: { voiceConfig: getVoiceConfig(getSelectedTtsModel(), voiceName) },
       },
     },
     opts
@@ -92,7 +92,7 @@ export async function geminiPodcastAudioCall(
           multiSpeakerVoiceConfig: {
             speakerVoiceConfigs: speakers.map((s) => ({
               speaker: s.name,
-              voiceConfig: { prebuiltVoiceConfig: { voiceName: s.voice } },
+              voiceConfig: getVoiceConfig(getSelectedTtsModel(), s.voice),
             })),
           },
         },
@@ -226,7 +226,7 @@ export async function fetchGeminiVoiceLibrary(opts: ApiCallOptions): Promise<Voi
           break;
         }
         collected.push(...(data.voices || []));
-        pageToken = data.nextPageToken || "";
+        pageToken = data.next_page_token || data.nextPageToken || "";
       } while (pageToken);
 
       if (collected.length) {
@@ -236,7 +236,7 @@ export async function fetchGeminiVoiceLibrary(opts: ApiCallOptions): Promise<Voi
           const genderValue = String(voice.gender || "").toLowerCase();
           return {
             id,
-            name: hebrewVoiceName(String(voice.displayName || id)),
+            name: hebrewVoiceName(String(voice.display_name || voice.displayName || id)),
             description: hebrewVoiceStyle(rawDescription),
             gender: genderValue === "male" || genderValue === "female" ? genderValue : "neutral",
             pitch: voice.pitch || undefined,
@@ -298,4 +298,10 @@ function hebrewVoiceStyle(description: string): string {
     [["resonant"], "מהדהד"], [["light"], "קליל"],
   ];
   return styles.find(([words]) => words.some((word) => value.includes(word)))?.[1] || "ייחודי";
+}
+
+/** Gemini 3.8 supports the full Voice Library identifier; older TTS models use preset names. */
+function getVoiceConfig(model: string, voiceName: string): Record<string, unknown> {
+  if (model.startsWith("gemini-3.8-")) return { voice: voiceName };
+  return { prebuiltVoiceConfig: { voiceName } };
 }
