@@ -5,7 +5,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
-import { getVoicesForTtsModel } from "../lib/catalogs";
+import { getVoicesForTtsModel, searchVoices } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
 import { geminiTextCall, geminiPodcastAudioCall, getSelectedTtsModel, fetchGeminiVoiceLibrary } from "../lib/gemini";
 import TrackCard from "../components/TrackCard";
@@ -33,9 +33,12 @@ export default function Podcast() {
 
   const [voices, setVoices] = useState(getVoicesForTtsModel(getSelectedTtsModel()));
   const [voicesLoading, setVoicesLoading] = useState(false);
+  const [voiceSearch, setVoiceSearch] = useState("");
+  const [voiceGender, setVoiceGender] = useState<"all" | "male" | "female">("all");
   const ttsModel = getSelectedTtsModel();
   const savedKeysKey = store.savedApiKeys.join("|");
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
+  const filteredVoices = searchVoices(voices, voiceSearch, voiceGender);
 
   useEffect(() => {
     let active = true;
@@ -145,6 +148,12 @@ export default function Podcast() {
 
           <div className="card rounded-2xl p-4 sm:rounded-[2rem] sm:p-6">
             <h3 className="mb-4 text-sm font-black text-ink sm:text-base">2. הדוברים {voicesLoading ? "· טוען ספריית קולות..." : ""}</h3>
+            <input value={voiceSearch} onChange={(e) => setVoiceSearch(e.target.value)} className="field mb-3 text-xs" placeholder="חיפוש קריין לפי שם, סגנון או מאפיין..." aria-label="חיפוש קריין" />
+            <div className="mb-3 flex gap-2">
+              {([{value:"all",label:"הכול"},{value:"male",label:"גבריים"},{value:"female",label:"נשיים"}] as const).map((item) => (
+                <button key={item.value} type="button" onClick={() => setVoiceGender(item.value)} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${voiceGender === item.value ? "bg-brand text-white" : "bg-soft text-mute"}`}>{item.label}</button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="label">שם דובר א׳</label>
@@ -152,17 +161,17 @@ export default function Podcast() {
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
                   <>
                     <optgroup label="קולות גבריים">
-                      {voices.filter((v) => v.gender === "male").map((v) => (
+                      {filteredVoices.filter((v) => v.gender === "male").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
                     <optgroup label="קולות נשיים">
-                      {voices.filter((v) => v.gender === "female").map((v) => (
+                      {filteredVoices.filter((v) => v.gender === "female").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
                     <optgroup label="קולות ניטרליים / לא מסווגים">
-                      {voices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                      {filteredVoices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
