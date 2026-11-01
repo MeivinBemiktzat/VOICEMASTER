@@ -100,7 +100,23 @@ export function searchVoices(voices: VoiceOption[], query: string, gender: "male
     const genderMatches = gender === "all" || voice.gender === gender || !voice.gender;
     if (!genderMatches) return false;
     if (!q) return true;
-    return [voice.name, voice.id, voice.description, voice.pitch || "", voice.gender === "male" ? "גברי" : voice.gender === "female" ? "נשי" : "ניטרלי"]
+    return [voice.name, voice.description, voice.pitch || "", voice.gender === "male" ? "גברי" : voice.gender === "female" ? "נשי" : "ניטרלי"]
       .join(" ").toLocaleLowerCase("he").includes(q);
+  });
+}
+
+
+/** מתרגם תוצאות API לתצוגה עברית יציבה; מזהה Google נשמר רק לצורך בקשת ה-TTS. */
+export function localizeVoiceOptions(voices: VoiceOption[]): VoiceOption[] {
+  const fallbackNames = ["משה", "אהרון", "דן", "יוסף", "איתן", "נועה", "אורי", "מיכל", "יעל", "תמר", "אליהו", "שמואל", "רחל", "דוד", "שרה", "אביגיל", "יצחק", "בנימין", "שירה", "לאה", "שלמה", "מרים", "יהודה", "אסתר", "נחום", "רבקה", "חנה", "יונתן", "גדעון", "דבורה"];
+  const styles = ["בהיר", "נמרץ", "עמוק", "רגוע", "ברור", "חמים", "חד", "רך", "סמכותי", "ידידותי", "יציב", "קליל"];
+  return voices.map((voice, index) => {
+    const preset = voiceCatalog.find((item) => item.id.toLowerCase() === voice.id.toLowerCase());
+    return {
+      ...voice,
+      name: preset?.name || fallbackNames[index % fallbackNames.length],
+      description: preset?.description || styles[index % styles.length],
+      gender: preset?.gender || voice.gender || "neutral",
+    };
   });
 }
