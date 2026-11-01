@@ -5,7 +5,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
-import { getVoicesForTtsModel } from "../lib/catalogs";
+import { getVoicesForTtsModel, searchVoices } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
 import { geminiTextCall, geminiAudioCall, getSelectedTtsModel, fetchGeminiVoiceLibrary } from "../lib/gemini";
 import AiButton from "../components/AiButton";
@@ -29,9 +29,12 @@ export default function Narration() {
 
   const [voices, setVoices] = useState(getVoicesForTtsModel(getSelectedTtsModel()));
   const [voicesLoading, setVoicesLoading] = useState(false);
+  const [voiceSearch, setVoiceSearch] = useState("");
+  const [voiceGender, setVoiceGender] = useState<"all" | "male" | "female">("all");
   const ttsModel = getSelectedTtsModel();
   const savedKeysKey = store.savedApiKeys.join("|");
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
+  const filteredVoices = searchVoices(voices, voiceSearch, voiceGender);
 
   useEffect(() => {
     let active = true;
@@ -204,23 +207,29 @@ export default function Narration() {
           <div className="mb-4 grid gap-3 sm:grid-cols-2 sm:gap-4">
             <div>
               <label className="label">קול {voicesLoading ? "· טוען ספרייה..." : ""}</label>
+              <input value={voiceSearch} onChange={(e) => setVoiceSearch(e.target.value)} className="field mb-2 text-xs" placeholder="חיפוש קריין לפי שם, סגנון או מאפיין..." aria-label="חיפוש קריין" />
+              <div className="mb-2 flex gap-2">
+                {([{value:"all",label:"הכול"},{value:"male",label:"גבריים"},{value:"female",label:"נשיים"}] as const).map((item) => (
+                  <button key={item.value} type="button" onClick={() => setVoiceGender(item.value)} className={`rounded-lg px-3 py-1.5 text-xs font-bold ${voiceGender === item.value ? "bg-brand text-white" : "bg-soft text-mute"}`}>{item.label}</button>
+                ))}
+              </div>
               <select
                 value={store.voice}
                 onChange={(e) => store.setVoice(e.target.value)}
                 className="field cursor-pointer bg-soft !border-none text-xs font-bold sm:text-sm"
               >
                 <optgroup label="קולות גבריים">
-                  {voices.filter((v) => v.gender === "male").map((v) => (
+                  {filteredVoices.filter((v) => v.gender === "male").map((v) => (
                     <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                   ))}
                 </optgroup>
                 <optgroup label="קולות נשיים">
-                  {voices.filter((v) => v.gender === "female").map((v) => (
+                  {filteredVoices.filter((v) => v.gender === "female").map((v) => (
                     <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                   ))}
                 </optgroup>
                 <optgroup label="קולות ניטרליים / לא מסווגים">
-                  {voices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                  {filteredVoices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
                     <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                   ))}
                 </optgroup>
