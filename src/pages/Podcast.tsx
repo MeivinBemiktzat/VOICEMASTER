@@ -123,14 +123,18 @@ export default function Podcast() {
                 <label className="label">שם דובר א׳</label>
                 <input value={nameA} onChange={(e) => setNameA(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  {voices.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
+                  {voices.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="label">שם דובר ב׳</label>
                 <input value={nameB} onChange={(e) => setNameB(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceB} onChange={(e) => setVoiceB(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  {voices.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
+                  {voices.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -153,7 +157,8 @@ export default function Podcast() {
               onChange={(e) => setScript(e.target.value)}
               rows={10}
               className="field resize-y text-sm leading-relaxed shadow-inner"
-              placeholder={`התסריט יופיע כאן. כל שורה מתחילה בשם הדובר, למשל:\n${nameA}: שלום וברוכים הבאים!`}
+              placeholder={`התסריט יופיע כאן. כל שורה מתחילה בשם הדובר, למשל:
+${nameA}: שלום וברוכים הבאים!`}
             />
             <button
               onClick={generateAudio}
