@@ -182,7 +182,11 @@ export default function Narration() {
                 onChange={(e) => store.setVoice(e.target.value)}
                 className="field cursor-pointer bg-soft !border-none text-xs font-bold sm:text-sm"
               >
-                {voices.map((v) => (\n                  <option key={v.id} value={v.id}>\n                    {v.name} — {v.description}\n                  </option>\n                ))}
+                {voices.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} — {v.description}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
