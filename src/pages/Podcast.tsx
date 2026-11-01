@@ -39,7 +39,7 @@ export default function Podcast() {
 
   useEffect(() => {
     let active = true;
-    if (!ttsModel.startsWith("gemini-3.8-") || !store.currentApiKey) {
+    if (!store.currentApiKey) {
       setVoices(getVoicesForTtsModel(ttsModel));
       return () => { active = false; };
     }
@@ -47,9 +47,13 @@ export default function Podcast() {
     fetchGeminiVoiceLibrary(apiOpts)
       .then((loaded) => {
         if (!active || !loaded.length) return;
-        setVoices(loaded);
-        const femaleVoice = loaded.find((voice) => voice.gender === "female");
-        const maleVoice = loaded.find((voice) => voice.gender === "male");
+        const available = ttsModel.startsWith("gemini-3.8-")
+          ? loaded
+          : loaded.filter((voice) => getVoicesForTtsModel(ttsModel).some((preset) => preset.id === voice.id));
+        if (!available.length) return;
+        setVoices(available);
+        const femaleVoice = available.find((voice) => voice.gender === "female");
+        const maleVoice = available.find((voice) => voice.gender === "male");
         if (femaleVoice) setVoiceA(femaleVoice.id);
         if (maleVoice) setVoiceB(maleVoice.id);
       })
