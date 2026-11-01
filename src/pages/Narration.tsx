@@ -35,10 +35,24 @@ export default function Narration() {
 
   useEffect(() => {
     let active = true;
-    if (!store.currentApiKey) return;
+    if (!ttsModel.startsWith("gemini-3.8-")) {
+      setVoices(getVoicesForTtsModel(ttsModel));
+      return () => { active = false; };
+    }
+    if (!store.currentApiKey) {
+      setVoices(getVoicesForTtsModel(ttsModel));
+      return () => { active = false; };
+    }
     setVoicesLoading(true);
     fetchGeminiVoiceLibrary(apiOpts)
-      .then((loaded) => { if (active && loaded.length) setVoices(loaded); })
+      .then((loaded) => {
+        if (!active || !loaded.length) return;
+        setVoices(loaded);
+        if (!loaded.some((voice) => voice.id === store.voice)) {
+          const fallback = loaded.find((voice) => voice.gender === "female") || loaded[0];
+          if (fallback) store.setVoice(fallback.id);
+        }
+      })
       .catch((error) => console.warn("[VoiceMaster] Voice library fallback:", error))
       .finally(() => { if (active) setVoicesLoading(false); });
     return () => { active = false; };
@@ -189,7 +203,7 @@ export default function Narration() {
 
           <div className="mb-4 grid gap-3 sm:grid-cols-2 sm:gap-4">
             <div>
-              <label className="label">קול</label>
+              <label className="label">קול {voicesLoading ? "· טוען ספרייה..." : ""}</label>
               <select
                 value={store.voice}
                 onChange={(e) => store.setVoice(e.target.value)}
