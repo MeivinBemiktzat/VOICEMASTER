@@ -229,7 +229,7 @@ export default function Narration() {
                   ))}
                 </optgroup>
                 <optgroup label="קולות ניטרליים / לא מסווגים">
-                  {filteredVoices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                  {filteredVoices.filter((v) => v.gender === "neutral").map((v) => (
                     <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                   ))}
                 </optgroup>
