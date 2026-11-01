@@ -121,40 +121,14 @@ export default function Podcast() {
                 <label className="label">שם דובר א׳</label>
                 <input value={nameA} onChange={(e) => setNameA(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  <optgroup label="גברים">
-                    {voiceCatalog.male.map((v, i) => (
-                      <option key={`a_m_${i}`} value={v.id}>
-                        {v.id}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="נשים">
-                    {voiceCatalog.female.map((v, i) => (
-                      <option key={`a_f_${i}`} value={v.id}>
-                        {v.id}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {voiceCatalog.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
                 </select>
               </div>
               <div>
                 <label className="label">שם דובר ב׳</label>
                 <input value={nameB} onChange={(e) => setNameB(e.target.value)} className="field mb-2 text-sm" />
                 <select value={voiceB} onChange={(e) => setVoiceB(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
-                  <optgroup label="גברים">
-                    {voiceCatalog.male.map((v, i) => (
-                      <option key={`b_m_${i}`} value={v.id}>
-                        {v.id}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="נשים">
-                    {voiceCatalog.female.map((v, i) => (
-                      <option key={`b_f_${i}`} value={v.id}>
-                        {v.id}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {voiceCatalog.map((v) => (\n                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>\n                  ))}
                 </select>
               </div>
             </div>
