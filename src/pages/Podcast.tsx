@@ -145,12 +145,12 @@ export default function Podcast() {
                 <select value={voiceA} onChange={(e) => setVoiceA(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
                   <>
                     <optgroup label="קולות גבריים">
-                      {voices.filter((v) => v.gender === "male").map((v) => (
+                      {voices.filter((v) => v.gender === "male" || v.gender === "neutral").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
                     <optgroup label="קולות נשיים">
-                      {voices.filter((v) => v.gender === "female").map((v) => (
+                      {voices.filter((v) => v.gender === "female" || v.gender === "neutral").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
