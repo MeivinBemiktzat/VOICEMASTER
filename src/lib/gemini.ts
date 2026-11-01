@@ -44,6 +44,37 @@ export function cleanGeneratedText(text: string): string {
     .trim();
 }
 
+/** בקשת GenerateContent מאומתת ל-Gemini. משמשת גם לטקסט וגם ל-TTS הוותיק. */
+async function apiCall(model: string, payload: unknown, opts: ApiCallOptions): Promise<any> {
+  const keys = [...new Set([opts.currentApiKey, ...opts.savedApiKeys].filter(Boolean))];
+  if (!keys.length) throw new ApiCallError("Missing API key", "לא הוגדר מפתח API.");
+  let lastError: ApiCallError | null = null;
+  for (const key of keys) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await response.json();
+      if (response.ok) return data;
+      lastError = new ApiCallError(
+        data?.error?.message || `Gemini request failed: ${response.status}`,
+        getHebrewApiError(response.status, data?.error?.message),
+        response.status
+      );
+      if (response.status !== 429 && response.status < 500) throw lastError;
+    } catch (error) {
+      if (error instanceof ApiCallError) throw error;
+      lastError = new ApiCallError(String((error as Error)?.message || error), "שגיאה בתקשורת עם Gemini.");
+    }
+  }
+  throw lastError || new ApiCallError("Gemini request failed", "לא ניתן ליצור קריינות כרגע.");
+}
+
 export async function geminiTextCall(prompt: string, opts: ApiCallOptions): Promise<string> {
   const data = await apiCall(selectedModel("voicemaster_text_model", MODEL_TEXT), { contents: [{ parts: [{ text: prompt }] }] }, opts);
   const result = data?.candidates?.[0]?.content?.parts?.[0]?.text;
