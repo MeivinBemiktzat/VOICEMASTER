@@ -5,9 +5,9 @@ import { useAuth } from "../lib/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
-import { voiceCatalog } from "../lib/catalogs";
+import { getVoicesForTtsModel } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
-import { geminiTextCall, geminiAudioCall } from "../lib/gemini";
+import { geminiTextCall, geminiAudioCall, getSelectedTtsModel } from "../lib/gemini";
 import AiButton from "../components/AiButton";
 import TrackCard from "../components/TrackCard";
 
@@ -26,6 +26,8 @@ export default function Narration() {
 
   const [promptInput, setPromptInput] = useState("");
   const [customStyleInput, setCustomStyleInput] = useState("");
+
+  const voices = getVoicesForTtsModel(getSelectedTtsModel());
 
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
 
@@ -180,7 +182,7 @@ export default function Narration() {
                 onChange={(e) => store.setVoice(e.target.value)}
                 className="field cursor-pointer bg-soft !border-none text-xs font-bold sm:text-sm"
               >
-                {voiceCatalog.map((v) => (\n                  <option key={v.id} value={v.id}>\n                    {v.name} — {v.description}\n                  </option>\n                ))}
+                {voices.map((v) => (\n                  <option key={v.id} value={v.id}>\n                    {v.name} — {v.description}\n                  </option>\n                ))}
               </select>
             </div>
             <div>
