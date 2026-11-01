@@ -148,9 +148,9 @@ function extractAudio(data: any): Blob {
 }
 
 function extractInteractionWav(data: any): Blob {
-  const output = data?.output_audio?.data ||
-    (data?.steps || []).flatMap((step: any) => step?.content || [])
-      .filter((item: any) => item?.type === "audio" && item?.data).at(-1)?.data;
+  const audioItems = (data?.steps || []).flatMap((step: any) => step?.content || [])
+    .filter((item: any) => item?.type === "audio" && item?.data);
+  const output = data?.output_audio?.data || audioItems[audioItems.length - 1]?.data;
   if (!output) throw new ApiCallError("No interaction audio returned", "לא התקבל אודיו מלא מ-Google.");
   const bytes = base64ToBytes(output);
   return new Blob([bytes], { type: "audio/wav" });
