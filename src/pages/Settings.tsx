@@ -3,11 +3,18 @@ import { Check,Copy,KeyRound,Palette,Settings as SettingsIcon,Sparkles,Trash2,Mo
 import { useDarkMode } from "../hooks/useDarkMode";
 import { useAppStore } from "../lib/AppStore"; import { useToast } from "../lib/ToastContext"; import { useAuth } from "../lib/AuthContext";
 function classifyGoogleModels(rawModels:any[]){
- const usable=rawModels.filter((m:any)=>Array.isArray(m.supportedGenerationMethods)&&m.supportedGenerationMethods.includes("generateContent")).map((m:any)=>({name:String(m.name||"").replace(/^models\//,""),displayName:String(m.displayName||m.name||"")})).filter((m:any)=>m.name);
+ const normalized=rawModels.map((m:any)=>({
+  name:String(m.name||"").replace(/^models\\//,""),
+  displayName:String(m.displayName||m.name||""),
+  methods:Array.isArray(m.supportedGenerationMethods)?m.supportedGenerationMethods:[]
+ })).filter((m:any)=>m.name);
  const isGoogleModel=(m:any)=>/^(gemini-|gemma-)/i.test(m.name);
  const isTts=(m:any)=>/tts|text.?to.?speech|speech.?generation/i.test(m.name+" "+m.displayName);
  const isNonText=(m:any)=>/nano.?banana|imagen|image|embedding|embed|veo|lyria|music|robot|computer.?use|antigravity|aqa/i.test(m.name+" "+m.displayName);
- return {tts:usable.filter((m:any)=>isGoogleModel(m)&&isTts(m)),text:usable.filter((m:any)=>isGoogleModel(m)&&!isTts(m)&&!isNonText(m))};
+ return {
+  tts:normalized.filter((m:any)=>isGoogleModel(m)&&isTts(m)),
+  text:normalized.filter((m:any)=>isGoogleModel(m)&&!isTts(m)&&!isNonText(m)&&m.methods.includes("generateContent"))
+ };
 }
 function maskKey(key:string){return key.length<=10?key:`${key.slice(0,6)}...${key.slice(-4)}`;}
 export default function Settings(){
