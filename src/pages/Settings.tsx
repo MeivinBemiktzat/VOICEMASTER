@@ -4,7 +4,7 @@ import { useDarkMode } from "../hooks/useDarkMode";
 import { useAppStore } from "../lib/AppStore"; import { useToast } from "../lib/ToastContext"; import { useAuth } from "../lib/AuthContext";
 function classifyGoogleModels(rawModels:any[]){
  const normalized=rawModels.map((m:any)=>({
-  name:String(m.name||"").replace(/^models\\//,""),
+  name:String(m.name||"").replace(/^models\//,""),
   displayName:String(m.displayName||m.name||""),
   methods:Array.isArray(m.supportedGenerationMethods)?m.supportedGenerationMethods:[]
  })).filter((m:any)=>m.name);
