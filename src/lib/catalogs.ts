@@ -1,36 +1,53 @@
-import type { VoiceCatalog, StyleOption } from "./types";
+import type { VoiceOption, StyleOption } from "./types";
 
 /**
- * קטלוג הקולות מהאתר המקורי. חלק מהרשומות חוזרות על אותו קול (id) עם תיאור שונה:
- * הן נשמרו כדי לשמור על התנהגות האתר המקורי. בפועל נשלח ל-Gemini רק שם הקול.
+ * הקולות המובנים של Gemini TTS לפי התיעוד הרשמי של Google.
+ * שני מודלי Gemini 3.8 TTS חולקים את אותה ספריית קולות.
+ * הערך id נשלח ל-API; name ו-description מיועדים לתצוגה בעברית.
  */
-const v = (id: string, description: string) => ({ id, description });
+export const voiceCatalog: VoiceOption[] = [
+  { id: "Zephyr", name: "זפיר", description: "בהיר" },
+  { id: "Puck", name: "פאק", description: "נמרץ" },
+  { id: "Charon", name: "קארון", description: "אינפורמטיבי" },
+  { id: "Kore", name: "קורי", description: "תקיף" },
+  { id: "Fenrir", name: "פנריר", description: "נלהב" },
+  { id: "Leda", name: "לדה", description: "צעיר" },
+  { id: "Orus", name: "אורוס", description: "תקיף" },
+  { id: "Aoede", name: "אואדה", description: "קליל" },
+  { id: "Callirrhoe", name: "קלירואה", description: "נינוח" },
+  { id: "Autonoe", name: "אוטונואה", description: "בהיר" },
+  { id: "Enceladus", name: "אנקלדוס", description: "נושם" },
+  { id: "Iapetus", name: "יאפטוס", description: "ברור" },
+  { id: "Umbriel", name: "אומבריאל", description: "נינוח" },
+  { id: "Algieba", name: "אלג'יבה", description: "חלק" },
+  { id: "Despina", name: "דספינה", description: "חלק" },
+  { id: "Erinome", name: "ארינומה", description: "ברור" },
+  { id: "Algenib", name: "אלג'ניב", description: "מחוספס" },
+  { id: "Rasalgethi", name: "ראסאלגטי", description: "אינפורמטיבי" },
+  { id: "Laomedeia", name: "לאומדיה", description: "נמרץ" },
+  { id: "Achernar", name: "אחרנר", description: "רך" },
+  { id: "Alnilam", name: "אלנילם", description: "תקיף" },
+  { id: "Schedar", name: "שדר", description: "מאוזן" },
+  { id: "Gacrux", name: "גקרוקס", description: "בוגר" },
+  { id: "Pulcherrima", name: "פולכרימה", description: "החלטי" },
+  { id: "Achird", name: "אכירד", description: "ידידותי" },
+  { id: "Zubenelgenubi", name: "זובנאלגנובי", description: "אגבי" },
+  { id: "Vindemiatrix", name: "וינדמיאטריקס", description: "עדין" },
+  { id: "Sadachbia", name: "סדחביה", description: "תוסס" },
+  { id: "Sadaltager", name: "סדלטגר", description: "מלומד" },
+  { id: "Sulafat", name: "סולפאט", description: "חמים" },
+];
 
-export const voiceCatalog: VoiceCatalog = {
-  male: [
-    v("Zephyr", "קליל"), v("Fenrir", "עמוק"), v("Puck", "שובב"), v("Charon", "סמכותי"), v("Orus", "קלאסי"),
-    v("Enceladus", "צעיר"), v("Iapetus", "חם"), v("Algieba", "נמרץ"), v("Rasalgethi", "בוגר"), v("Achernar", "יציב"),
-    v("Alnilam", "בהיר"), v("Schedar", "נעים"), v("Achird", "שידורי"), v("Zubenelgenubi", "עמוק מאוד"),
-    v("Sadachbia", "רך"), v("Sadaltager", "טבעי"), v("Sulafat", "עוצמתי"),
-    v("Zephyr", "פרסומי"), v("Zephyr", "רגוע"), v("Zephyr", "חברי"), v("Zephyr", "דוקומנטרי"),
-    v("Fenrir", "קולנועי"), v("Fenrir", "דרמטי"), v("Fenrir", "חדשותי"), v("Fenrir", "מלכותי"),
-    v("Puck", "צעיר ואנרגטי"), v("Puck", "קומי"), v("Puck", "פודקאסט"), v("Puck", "שיווקי"),
-    v("Charon", "קריין חד"), v("Charon", "מנחה"), v("Charon", "עסקי"), v("Charon", "רשמי"),
-    v("Orus", "חם ובוגר"), v("Orus", "מספר סיפורים"), v("Orus", "אלגנטי"), v("Orus", "מוטיבציוני"),
-    v("Iapetus", "פרימיום"), v("Iapetus", "עמוק וחם"), v("Algieba", "ספורטיבי"), v("Algieba", "מהיר"),
-    v("Rasalgethi", "בשל ורגוע"), v("Achernar", "יציב וברור"), v("Alnilam", "בהיר ודינמי"),
-  ],
-  female: [
-    v("Kore", "מקצועי"), v("Leda", "עדין"), v("Aoede", "רך"), v("Callirrhoe", "רהוט"), v("Autonoe", "אנרגטי"),
-    v("Umbriel", "מסתורי"), v("Despina", "מהיר"), v("Erinome", "ידידותי"), v("Algenib", "חדשותי"),
-    v("Laomedeia", "מרגיע"), v("Gacrux", "אלגנטי"), v("Pulcherrima", "עשיר"), v("Vindemiatrix", "סבלני"),
-  ],
+/** הקטלוג הרשמי זהה לשני מודלי Gemini 3.8 TTS ולמודלי TTS קודמים המתועדים. */
+export const voicesByTtsModel: Record<string, VoiceOption[]> = {
+  "gemini-3.8-flash-tts": voiceCatalog,
+  "gemini-3.8-flash-lite-tts": voiceCatalog,
+  "gemini-3.1-flash-tts-preview": voiceCatalog,
+  "gemini-2.5-pro-preview-tts": voiceCatalog,
 };
 
-/** מספר קולות ייחודיים (לפי id) */
-export const uniqueVoiceCount = new Set([...voiceCatalog.male, ...voiceCatalog.female].map((x) => x.id)).size;
-
 export const styleCatalog: StyleOption[] = [
+
   { value: "natural", label: "טבעי" },
   { value: "broadcast", label: "שידור" },
   { value: "cheerful", label: "שמח" },
