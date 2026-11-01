@@ -97,10 +97,11 @@ export const uniqueVoiceCount = voiceCatalog.length;
 export function searchVoices(voices: VoiceOption[], query: string, gender: "male" | "female" | "all" = "all"): VoiceOption[] {
   const q = query.trim().toLocaleLowerCase("he");
   return voices.filter((voice) => {
-    const genderMatches = gender === "all" || voice.gender === gender || !voice.gender;
+    // קולות ללא מגדר מאומת לא נכנסים לקבוצות הגבריות/נשיות.
+    const genderMatches = gender === "all" || voice.gender === gender;
     if (!genderMatches) return false;
     if (!q) return true;
-    return [voice.name, voice.description, voice.pitch || "", voice.gender === "male" ? "גברי" : voice.gender === "female" ? "נשי" : "ניטרלי"]
+    return [voice.name, voice.description, voice.pitch || "", voice.gender === "male" ? "גברי" : "נשי"]
       .join(" ").toLocaleLowerCase("he").includes(q);
   });
 }
@@ -108,15 +109,25 @@ export function searchVoices(voices: VoiceOption[], query: string, gender: "male
 
 /** מתרגם תוצאות API לתצוגה עברית יציבה; מזהה Google נשמר רק לצורך בקשת ה-TTS. */
 export function localizeVoiceOptions(voices: VoiceOption[]): VoiceOption[] {
-  const fallbackNames = ["משה", "אהרון", "דן", "יוסף", "איתן", "נועה", "אורי", "מיכל", "יעל", "תמר", "אליהו", "שמואל", "רחל", "דוד", "שרה", "אביגיל", "יצחק", "בנימין", "שירה", "לאה", "שלמה", "מרים", "יהודה", "אסתר", "נחום", "רבקה", "חנה", "יונתן", "גדעון", "דבורה"];
+  const maleNames = ["משה", "אהרון", "דן", "יוסף", "איתן", "אורי", "אליהו", "שמואל", "דוד", "יצחק", "בנימין", "שלמה", "יהודה", "נחום", "יונתן", "גדעון"];
+  const femaleNames = ["נועה", "מיכל", "יעל", "תמר", "רחל", "שרה", "אביגיל", "שירה", "לאה", "מרים", "אסתר", "רבקה", "חנה", "דבורה", "רות", "הדס"];
   const styles = ["בהיר", "נמרץ", "עמוק", "רגוע", "ברור", "חמים", "חד", "רך", "סמכותי", "ידידותי", "יציב", "קליל"];
-  return voices.map((voice, index) => {
+  let maleIndex = 0;
+  let femaleIndex = 0;
+  return voices.map((voice) => {
     const preset = voiceCatalog.find((item) => item.id.toLowerCase() === voice.id.toLowerCase());
+    // בקטלוג הידוע המגדר קבוע; בקולות דינמיים מסתמכים רק על metadata מהשרת.
+    const gender = preset?.gender || voice.gender || "neutral";
+    const name = preset?.name || (gender === "male"
+      ? maleNames[maleIndex++ % maleNames.length]
+      : gender === "female"
+        ? femaleNames[femaleIndex++ % femaleNames.length]
+        : "קול ניטרלי");
     return {
       ...voice,
-      name: preset?.name || fallbackNames[index % fallbackNames.length],
-      description: preset?.description || styles[index % styles.length],
-      gender: preset?.gender || voice.gender || "neutral",
+      name,
+      description: preset?.description || voice.description || styles[voices.indexOf(voice) % styles.length],
+      gender,
     };
   });
 }
