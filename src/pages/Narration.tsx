@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles, Wand2, Loader2, Inbox } from "lucide-react";
 import { useAppStore } from "../lib/AppStore";
 import { useAuth } from "../lib/AuthContext";
@@ -7,7 +7,7 @@ import { useToast } from "../lib/ToastContext";
 import { useAiAction } from "../lib/useAiAction";
 import { getVoicesForTtsModel } from "../lib/catalogs";
 import { prompts } from "../lib/prompts";
-import { geminiTextCall, geminiAudioCall, getSelectedTtsModel } from "../lib/gemini";
+import { geminiTextCall, geminiAudioCall, getSelectedTtsModel, fetchGeminiVoiceLibrary } from "../lib/gemini";
 import AiButton from "../components/AiButton";
 import TrackCard from "../components/TrackCard";
 
@@ -27,9 +27,22 @@ export default function Narration() {
   const [promptInput, setPromptInput] = useState("");
   const [customStyleInput, setCustomStyleInput] = useState("");
 
-  const voices = getVoicesForTtsModel(getSelectedTtsModel());
-
+  const [voices, setVoices] = useState(getVoicesForTtsModel(getSelectedTtsModel()));
+  const [voicesLoading, setVoicesLoading] = useState(false);
+  const ttsModel = getSelectedTtsModel();
+  const savedKeysKey = store.savedApiKeys.join("|");
   const apiOpts = { currentApiKey: store.currentApiKey, savedApiKeys: store.savedApiKeys };
+
+  useEffect(() => {
+    let active = true;
+    if (!store.currentApiKey) return;
+    setVoicesLoading(true);
+    fetchGeminiVoiceLibrary(apiOpts)
+      .then((loaded) => { if (active && loaded.length) setVoices(loaded); })
+      .catch((error) => console.warn("[VoiceMaster] Voice library fallback:", error))
+      .finally(() => { if (active) setVoicesLoading(false); });
+    return () => { active = false; };
+  }, [store.currentApiKey, savedKeysKey, ttsModel]);
 
   const magicWrite = () =>
     run("magic", () => geminiTextCall(prompts.magicWrite(promptInput.trim() || "קריינות כללית"), apiOpts), (text) =>
@@ -182,11 +195,21 @@ export default function Narration() {
                 onChange={(e) => store.setVoice(e.target.value)}
                 className="field cursor-pointer bg-soft !border-none text-xs font-bold sm:text-sm"
               >
-                {voices.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name} — {v.description}
-                  </option>
-                ))}
+                <optgroup label="קולות גבריים">
+                  {voices.filter((v) => v.gender === "male").map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="קולות נשיים">
+                  {voices.filter((v) => v.gender === "female").map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="קולות ניטרליים / לא מסווגים">
+                  {voices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                    <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
+                  ))}
+                </optgroup>
               </select>
             </div>
             <div>
