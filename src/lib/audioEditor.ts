@@ -1,7 +1,7 @@
 export type ClipEffect =
   | "none" | "echo" | "reverb" | "fade" | "chorus" | "flanger" | "phaser"
   | "distortion" | "telephone" | "lowpass" | "highpass" | "robot" | "pitch"
-  | "compressor" | "stereo" | "reverse" | "vinyl" | "radio";
+  | "compressor" | "stereo" | "reverse" | "vinyl" | "radio" | "stutter" | "glitch" | "vibrato" | "tremolo" | "megaphone" | "underwater" | "bassboost" | "sparkle" | "slapback" | "pingpong" | "gate" | "limiter" | "bitcrush" | "detune" | "warmth" | "telephone2";
 
 export type AudioClip = {
   id: string; name: string; blob: Blob; start: number; trimStart: number; trimEnd: number;
@@ -15,7 +15,8 @@ export const EFFECTS: {value: ClipEffect; label: string}[] = [
  {value:"distortion",label:"עיוות / Distortion"},{value:"telephone",label:"טלפון"},{value:"lowpass",label:"מסנן נמוכים"},
  {value:"highpass",label:"מסנן גבוהים"},{value:"robot",label:"רובוט"},{value:"pitch",label:"גוון חד"},
  {value:"compressor",label:"דחיסה / Compressor"},{value:"stereo",label:"הרחבת סטריאו"},
- {value:"reverse",label:"הפוך"},{value:"vinyl",label:"תקליט וינטג׳"},{value:"radio",label:"רדיו"}
+ {value:"reverse",label:"הפוך"},{value:"vinyl",label:"תקליט וינטג׳"},{value:"radio",label:"רדיו"},
+ {value:"stutter",label:"חזרת פתיחה בלופ (Stutter)"},{value:"glitch",label:"גליץ׳ דיגיטלי"},{value:"vibrato",label:"ויברטו"},{value:"tremolo",label:"טרמולו"},{value:"megaphone",label:"מגפון"},{value:"underwater",label:"מתחת למים"},{value:"bassboost",label:"חיזוק בס"},{value:"sparkle",label:"צליל נוצץ"},{value:"slapback",label:"הד קצר"},{value:"pingpong",label:"הד מתחלף בסטריאו"},{value:"gate",label:"שער רעש"},{value:"limiter",label:"מגביל עוצמה"},{value:"bitcrush",label:"8-bit / משחקי"},{value:"detune",label:"כיוונון נמוך"},{value:"warmth",label:"חום אנלוגי"},{value:"telephone2",label:"טלפון ישן"}
 ];
 
 export async function durationOf(blob: Blob) {
@@ -50,20 +51,25 @@ export async function exportMix(clips: AudioClip[]) {
   const b=await ctx.decodeAudioData(await c.blob.arrayBuffer()),src=ctx.createBufferSource();src.buffer=b;src.playbackRate.value=c.speed;
   const gain=ctx.createGain();gain.gain.value=Math.max(0,c.volume);
   const nodes:AudioNode[]=[src];
-  if(["lowpass","telephone","radio","vinyl"].includes(c.effect)){const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.value=c.effect==="telephone"?3200:c.effect==="radio"?3800:c.effect==="vinyl"?9000:1200;nodes.push(f);}
+  if(["lowpass","telephone","radio","vinyl","megaphone","underwater","sparkle","telephone2"].includes(c.effect)){const f=ctx.createBiquadFilter();f.type="lowpass";f.frequency.value=c.effect==="telephone"||c.effect==="megaphone"?3200:c.effect==="radio"||c.effect==="telephone2"?3800:c.effect==="vinyl"||c.effect==="sparkle"?9000:c.effect==="underwater"?650:1200;nodes.push(f);}
+  if(c.effect==="bassboost"||c.effect==="warmth"){const f=ctx.createBiquadFilter();f.type="lowshelf";f.frequency.value= c.effect==="bassboost"?140:220;f.gain.value=c.effect==="bassboost"?9:4;nodes.push(f);}
   if(c.effect==="highpass"){const f=ctx.createBiquadFilter();f.type="highpass";f.frequency.value=850;nodes.push(f);}
   if(c.effect==="telephone"||c.effect==="radio"){const f=ctx.createBiquadFilter();f.type="highpass";f.frequency.value= c.effect==="telephone"?450:250;nodes.push(f);}
-  if(c.effect==="distortion"){nodes.push(makeDistortion(ctx));}
+  if(c.effect==="distortion"||c.effect==="bitcrush"||c.effect==="glitch"){nodes.push(makeDistortion(ctx));}
+  if(c.effect==="limiter"||c.effect==="gate"){const comp=ctx.createDynamicsCompressor();comp.threshold.value=c.effect==="limiter"?-8:-38;comp.knee.value=0;comp.ratio.value= c.effect==="limiter"?20:12;comp.attack.value=.003;comp.release.value=.08;nodes.push(comp);}
+  if(c.effect==="detune"){src.detune.value=-500;}
+  if(c.effect==="vibrato"||c.effect==="tremolo"){const lfo=ctx.createOscillator(),mod=ctx.createGain();lfo.frequency.value=c.effect==="vibrato"?5:8;mod.gain.value=c.effect==="vibrato"?18:.35;lfo.connect(mod);if(c.effect==="vibrato")mod.connect(src.detune);else mod.connect(gain.gain);lfo.start(c.start);lfo.stop(end);}
   if(c.effect==="compressor"){const comp=ctx.createDynamicsCompressor();comp.threshold.value=-26;comp.ratio.value=5;nodes.push(comp);}
   if(c.effect==="robot"){const lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=28;lg.gain.value=.45;lfo.connect(lg);lg.connect(gain.gain);lfo.start(c.start);lfo.stop(end);}
-  if(c.effect==="echo"||c.effect==="flanger"||c.effect==="phaser"||c.effect==="chorus"){
-   const delay=ctx.createDelay(2);delay.delayTime.value=c.effect==="flanger"?.012:c.effect==="chorus"?.028:c.effect==="phaser"?.004:.28;
-   const wet=ctx.createGain();wet.gain.value=c.effect==="echo"?.3:c.effect==="phaser"?.45:.25;
+  if(c.effect==="echo"||c.effect==="flanger"||c.effect==="phaser"||c.effect==="chorus"||c.effect==="slapback"||c.effect==="pingpong"){
+   const delay=ctx.createDelay(2);delay.delayTime.value=c.effect==="flanger"?.012:c.effect==="chorus"?.028:c.effect==="phaser"?.004:c.effect==="slapback"?.11:c.effect==="pingpong"?.36:.28;
+   const wet=ctx.createGain();wet.gain.value=c.effect==="echo"?.3:c.effect==="phaser"?.45:c.effect==="slapback"?.5:c.effect==="pingpong"?.4:.25;
    const feedback=ctx.createGain();feedback.gain.value=c.effect==="echo"?.22:.12;
    let chain: AudioNode = src;
    for (const node of nodes.slice(1)) { chain.connect(node); chain = node; }
    chain.connect(gain);gain.connect(ctx.destination);gain.connect(delay);delay.connect(wet);wet.connect(ctx.destination);
-   if(c.effect==="echo"){delay.connect(feedback);feedback.connect(delay);}
+   if(c.effect==="echo"||c.effect==="pingpong"){delay.connect(feedback);feedback.connect(delay);}
+   if(c.effect==="pingpong"){const pan=ctx.createStereoPanner();pan.pan.value=1;wet.disconnect();wet.connect(pan);pan.connect(ctx.destination);}
   } else {
    let chain: AudioNode = src; for (const node of nodes.slice(1)) { chain.connect(node); chain = node; } chain.connect(gain);gain.connect(ctx.destination);
    if(c.effect==="reverb"){const d=ctx.createDelay(2),wet=ctx.createGain();d.delayTime.value=.075;wet.gain.value=.4;gain.connect(d);d.connect(wet);wet.connect(ctx.destination);}
@@ -72,7 +78,11 @@ export async function exportMix(clips: AudioClip[]) {
   const visible=Math.max(.01,c.duration-c.trimStart-c.trimEnd);
   if(c.fadeIn>0){gain.gain.setValueAtTime(0,c.start);gain.gain.linearRampToValueAtTime(c.volume,c.start+Math.min(c.fadeIn,visible/c.speed));}
   if(c.fadeOut>0){gain.gain.setValueAtTime(c.volume,Math.max(c.start,c.start+visible/c.speed-c.fadeOut));gain.gain.linearRampToValueAtTime(0,c.start+visible/c.speed);}
-  src.start(c.start,c.trimStart,visible);
+  if(c.effect==="stutter"){
+   const loop=Math.min(.18,visible/8),repeats=4;
+   for(let i=0;i<repeats;i++){const repeat=ctx.createBufferSource();repeat.buffer=b;repeat.playbackRate.value=c.speed;repeat.connect(gain);repeat.start(c.start+i*loop/c.speed,c.trimStart,loop);}
+   const rest=visible-loop; if(rest>.005){const continuation=ctx.createBufferSource();continuation.buffer=b;continuation.playbackRate.value=c.speed;continuation.connect(gain);continuation.start(c.start+repeats*loop/c.speed,c.trimStart+loop,rest);}
+  } else src.start(c.start,c.trimStart,visible);
  }
  return wav(await ctx.startRendering());
 }
