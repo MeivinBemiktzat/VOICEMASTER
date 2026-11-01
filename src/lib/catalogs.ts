@@ -83,3 +83,8 @@ export const styleCatalog: StyleOption[] = [
 /** הסגנונות שמותר ל"התאמת סגנון אוטומטית" לבחור מהם (כמו באתר המקורי) */
 export const toneChoices =
   "natural, cheerful, serious, whisper, excited, calm, authoritative, friendly, professional, storytelling, shouting, terrified, sad, angry, hopeful";
+
+
+export function getVoicesForTtsModel(model: string): VoiceOption[] {
+  return voicesByTtsModel[model] || voiceCatalog;
+}
