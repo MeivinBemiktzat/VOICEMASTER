@@ -58,23 +58,23 @@ export async function geminiAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const model = getSelectedTtsModel();
-  const chunks = splitTextForSpeech(text, 700);
-  const segments: Blob[] = [];
+  const chunks = splitTextForSpeech(text, model.startsWith("gemini-3.8-") ? 1400 : 650);
+  const audio: Blob[] = [];
   for (const chunk of chunks) {
-    const data = await apiCall(
-      model,
-      {
+    if (model.startsWith("gemini-3.8-")) {
+      audio.push(await gemini38SingleSpeaker(chunk, styleInstruction, voiceName, model, opts));
+    } else {
+      const data = await apiCall(model, {
         contents: [{ parts: [{ text: prompts.narration(styleInstruction, chunk) }] }],
         generationConfig: {
           responseModalities: ["AUDIO"],
-          speechConfig: { voiceConfig: getVoiceConfig(model, voiceName) },
+          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
         },
-      },
-      opts
-    );
-    segments.push(extractAudio(data));
+      }, opts);
+      audio.push(extractAudio(data));
+    }
   }
-  return { blob: await joinWavSegments(segments) };
+  return { blob: await joinWavSegments(audio) };
 }
 
 /** פודקאסט: שני דוברים, לכל אחד קול משלו. שורות התסריט צריכות להתחיל בשם הדובר. */
@@ -84,24 +84,48 @@ export async function geminiPodcastAudioCall(
   speakers: [SpeakerConfig, SpeakerConfig],
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
-  const data = await apiCall(
-    getSelectedTtsModel(),
-    {
-      contents: [{ parts: [{ text: prompts.podcastNarration(styleInstruction, script) }] }],
-      generationConfig: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          multiSpeakerVoiceConfig: {
-            speakerVoiceConfigs: speakers.map((s) => ({
-              speaker: s.name,
-              voiceConfig: getVoiceConfig(getSelectedTtsModel(), s.voice),
-            })),
-          },
+  const model = getSelectedTtsModel();
+  if (model.startsWith("gemini-3.8-")) {
+    const turns = parsePodcastTurns(script, speakers, 1400);
+    const data = await interactionsCall(model, {
+      model,
+      input: [{
+        type: "user_input",
+        content: turns.map((turn) => ({
+          type: "text",
+          text: turn.text,
+          annotations: [{
+            type: "speech_metadata",
+            speaker: turn.speaker,
+            style: styleInstruction,
+          }],
+        })),
+      }],
+      response_format: { type: "audio" },
+      generation_config: {
+        speech_config: {
+          mode: "conversational",
+          speakers: speakers.map((speaker) => ({ speaker: speaker.name, voice: speaker.voice })),
+        },
+      },
+    }, opts);
+    return { blob: extractInteractionWav(data) };
+  }
+
+  const data = await apiCall(model, {
+    contents: [{ parts: [{ text: prompts.podcastNarration(styleInstruction, script) }] }],
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig: {
+        multiSpeakerVoiceConfig: {
+          speakerVoiceConfigs: speakers.map((speaker) => ({
+            speaker: speaker.name,
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: speaker.voice } },
+          })),
         },
       },
     },
-    opts
-  );
+  }, opts);
   return { blob: extractAudio(data) };
 }
 
@@ -114,13 +138,28 @@ function extractAudio(data: any): Blob {
     const reason = data?.candidates?.[0]?.finishReason || "unknown";
     throw new ApiCallError(`No audio returned: ${reason}`, "לא התקבל אודיו מהשירות. נסה שוב.");
   }
-  const rate = parseInt(String(audioParts[0].inlineData.mimeType).split("rate=")[1] || "", 10) || 24000;
-  const buffers = audioParts.map((part: any) => base64ToBytes(part.inlineData.data));
-  const total = buffers.reduce((sum: number, buffer: Uint8Array) => sum + buffer.length, 0);
-  const pcm = new Uint8Array(total);
-  let offset = 0;
-  for (const buffer of buffers) { pcm.set(buffer, offset); offset += buffer.length; }
-  return pcmBytesToWav(pcm, rate);
+  const mime = String(audioParts[0].inlineData.mimeType || "");
+  const bytes = concatBytes(audioParts.map((part: any) => base64ToBytes(part.inlineData.data)));
+  if (mime.toLowerCase().includes("wav") || hasWavHeader(bytes)) {
+    return new Blob([bytes], { type: "audio/wav" });
+  }
+  const rate = parseInt(mime.split("rate=")[1] || "", 10) || 24000;
+  return pcmBytesToWav(bytes, rate);
+}
+
+function extractInteractionWav(data: any): Blob {
+  const output = data?.output_audio?.data ||
+    (data?.steps || []).flatMap((step: any) => step?.content || [])
+      .filter((item: any) => item?.type === "audio" && item?.data).at(-1)?.data;
+  if (!output) throw new ApiCallError("No interaction audio returned", "לא התקבל אודיו מלא מ-Google.");
+  const bytes = base64ToBytes(output);
+  return new Blob([bytes], { type: "audio/wav" });
+}
+
+function hasWavHeader(bytes: Uint8Array): boolean {
+  return bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.slice(8, 12)) === "WAVE";
 }
 
 function base64ToBytes(value: string): Uint8Array {
@@ -183,6 +222,71 @@ async function joinWavSegments(segments: Blob[]): Promise<Blob> {
   let offset = 0;
   for (const item of decoded) { joined.set(item.pcm, offset); offset += item.pcm.length; }
   return pcmBytesToWav(joined, decoded[0].rate);
+}
+
+async function interactionsCall(model: string, payload: unknown, opts: ApiCallOptions): Promise<any> {
+  const keys = [...new Set([opts.currentApiKey, ...opts.savedApiKeys].filter(Boolean))];
+  let lastError: ApiCallError | null = null;
+  for (const key of keys) {
+    try {
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (response.ok) return data;
+      lastError = new ApiCallError(data?.error?.message || "Interactions API failed", getHebrewApiError(response.status, data?.error?.message), response.status);
+      if (response.status !== 429 && response.status < 500) throw lastError;
+    } catch (error) {
+      if (error instanceof ApiCallError) throw error;
+      lastError = new ApiCallError((error as Error).message, "שגיאה ביצירת הקריינות דרך Gemini.");
+    }
+  }
+  throw lastError || new ApiCallError("No API key", "לא הוגדר מפתח API.");
+}
+
+async function gemini38SingleSpeaker(
+  text: string, style: string, voice: string, model: string, opts: ApiCallOptions
+): Promise<Blob> {
+  const data = await interactionsCall(model, {
+    model,
+    input: [{
+      type: "user_input",
+      content: [{
+        type: "text",
+        text,
+        annotations: [{ type: "speech_metadata", style }],
+      }],
+    }],
+    response_format: { type: "audio" },
+    generation_config: { speech_config: [{ voice }] },
+  }, opts);
+  return extractInteractionWav(data);
+}
+
+function parsePodcastTurns(
+  script: string, speakers: [SpeakerConfig, SpeakerConfig], maxChars: number
+): Array<{ speaker: string; text: string }> {
+  const names = speakers.map((speaker) => speaker.name);
+  const turns: Array<{ speaker: string; text: string }> = [];
+  for (const rawLine of script.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const match = line.match(/^([^:：]{1,50})[:：]\s*(.*)$/);
+    const speaker = match && names.includes(match[1].trim()) ? match[1].trim() : names[0];
+    const text = match ? match[2].trim() : line;
+    if (!text) continue;
+    for (const chunk of splitTextForSpeech(text, maxChars)) turns.push({ speaker, text: chunk });
+  }
+  return turns;
+}
+
+function concatBytes(chunks: Uint8Array[]): Uint8Array {
+  const output = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.length, 0));
+  let offset = 0;
+  for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
+  return output;
 }
 
 /**
@@ -283,10 +387,4 @@ function hebrewVoiceStyle(description: string): string {
     [["resonant"], "מהדהד"], [["light"], "קליל"],
   ];
   return styles.find(([words]) => words.some((word) => value.includes(word)))?.[1] || "ייחודי";
-}
-
-/** Gemini 3.8 supports the full Voice Library identifier; older TTS models use preset names. */
-function getVoiceConfig(model: string, voiceName: string): Record<string, unknown> {
-  if (model.startsWith("gemini-3.8-")) return { voice: voiceName };
-  return { prebuiltVoiceConfig: { voiceName } };
 }
