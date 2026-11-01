@@ -40,11 +40,7 @@ export function cleanGeneratedText(text: string): string {
   return String(text || "")
     .replace(/^[\s`*_#>-]+/gm, "")
     .replace(/[*#`]/g, "")
-    .replace(/^\s*\d+[.)]\s*/gm, "")
-    .replace(/
-{3,}/g, "
-
-")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
