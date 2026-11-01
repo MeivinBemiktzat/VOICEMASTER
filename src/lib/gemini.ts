@@ -3,7 +3,7 @@ import { prompts } from "./prompts";
 
 /** מודלים: שנו כאן אם Google מחליפה שמות. הערכים זהים לאתר המקורי. */
 export const MODEL_TEXT = "gemini-3.5-flash-lite";
-export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";
+export const MODEL_AUDIO = "gemini-3.1-flash-tts-preview";\n\nexport function getSelectedTtsModel(): string {\n  return selectedModel("voicemaster_tts_model", MODEL_AUDIO);\n}
 
 function selectedModel(storageKey: string, fallback: string): string {
   try { return localStorage.getItem(storageKey) || fallback; } catch { return fallback; }
@@ -55,7 +55,7 @@ export async function geminiAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const data = await apiCall(
-    selectedModel("voicemaster_tts_model", MODEL_AUDIO),
+    getSelectedTtsModel(),
     {
       contents: [{ parts: [{ text: prompts.narration(styleInstruction, text) }] }],
       generationConfig: {
@@ -76,7 +76,7 @@ export async function geminiPodcastAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const data = await apiCall(
-    MODEL_AUDIO,
+    getSelectedTtsModel(),
     {
       contents: [{ parts: [{ text: prompts.podcastNarration(styleInstruction, script) }] }],
       generationConfig: {
