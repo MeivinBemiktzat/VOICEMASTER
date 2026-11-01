@@ -35,10 +35,6 @@ export default function Narration() {
 
   useEffect(() => {
     let active = true;
-    if (!ttsModel.startsWith("gemini-3.8-")) {
-      setVoices(getVoicesForTtsModel(ttsModel));
-      return () => { active = false; };
-    }
     if (!store.currentApiKey) {
       setVoices(getVoicesForTtsModel(ttsModel));
       return () => { active = false; };
@@ -47,9 +43,13 @@ export default function Narration() {
     fetchGeminiVoiceLibrary(apiOpts)
       .then((loaded) => {
         if (!active || !loaded.length) return;
-        setVoices(loaded);
-        if (!loaded.some((voice) => voice.id === store.voice)) {
-          const fallback = loaded.find((voice) => voice.gender === "female") || loaded[0];
+        const available = ttsModel.startsWith("gemini-3.8-")
+          ? loaded
+          : loaded.filter((voice) => getVoicesForTtsModel(ttsModel).some((preset) => preset.id === voice.id));
+        if (!available.length) return;
+        setVoices(available);
+        if (!available.some((voice) => voice.id === store.voice)) {
+          const fallback = available.find((voice) => voice.gender === "female") || available[0];
           if (fallback) store.setVoice(fallback.id);
         }
       })
