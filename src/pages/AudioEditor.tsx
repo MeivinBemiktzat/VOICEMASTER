@@ -97,5 +97,7 @@ export default function AudioEditor(){
  </div>
 
  <div className="card rounded-[2rem] p-5 sm:p-7"><div className="mb-4 flex items-center gap-2"><Sparkles className="text-brand"/><h2 className="font-display text-xl font-black">יצירת מוזיקת רקע עם Gemini</h2></div><textarea value={brief} onChange={e=>setBrief(e.target.value)} className="field min-h-24 w-full" placeholder="תארו את המוזיקה..."/><div className="mt-3 flex flex-wrap gap-2">{instruments.map(x=><span key={x} className="rounded-full bg-soft px-3 py-1 text-xs text-mute">{x}</span>)}</div><button onClick={generate} disabled={loadingKey==="music"} className="btn btn-primary mt-4"><Sparkles size={16}/>{loadingKey==="music"?"Gemini יוצר...":"צור מוזיקת רקע והוסף לציר הזמן"}</button>{error&&<div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-700"><b>שגיאה:</b> {error}</div>}</div>
+ </div>
+ </div>
  </section>;
 }
