@@ -171,7 +171,7 @@ export default function Podcast() {
                       ))}
                     </optgroup>
                     <optgroup label="קולות ניטרליים / לא מסווגים">
-                      {filteredVoices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                      {filteredVoices.filter((v) => v.gender === "neutral").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
@@ -184,17 +184,17 @@ export default function Podcast() {
                 <select value={voiceB} onChange={(e) => setVoiceB(e.target.value)} className="field cursor-pointer bg-soft !border-none text-xs font-bold">
                   <>
                     <optgroup label="קולות גבריים">
-                      {voices.filter((v) => v.gender === "male").map((v) => (
+                      {searchVoices(voices, voiceSearch, "male").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
                     <optgroup label="קולות נשיים">
-                      {voices.filter((v) => v.gender === "female").map((v) => (
+                      {searchVoices(voices, voiceSearch, "female").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
                     <optgroup label="קולות ניטרליים / לא מסווגים">
-                      {voices.filter((v) => !v.gender || v.gender === "neutral").map((v) => (
+                      {searchVoices(voices, voiceSearch, "all").filter((v) => v.gender === "neutral").map((v) => (
                         <option key={v.id} value={v.id}>{v.name} — {v.description}</option>
                       ))}
                     </optgroup>
