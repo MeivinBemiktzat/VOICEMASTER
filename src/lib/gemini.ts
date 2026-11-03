@@ -89,7 +89,7 @@ export async function geminiAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const model = getSelectedTtsModel();
-  const chunks = splitTextForSpeech(text, model.startsWith("gemini-3.8-") ? 700 : 180);
+  const chunks = splitTextForSpeech(text, 180);
   const audio: Blob[] = [];
   for (const chunk of chunks) {
     if (model.startsWith("gemini-3.8-")) {
@@ -364,14 +364,9 @@ async function gemini38SingleSpeaker(
     response_format: { type: "audio" },
     generation_config: { speech_config: [{ voice }] },
   }, opts);
-  const blob = extractInteractionWav(data);
-  if (text.length > 100 && blob.size < 10000) {
-    throw new ApiCallError(
-      `Suspiciously short TTS output: ${blob.size} bytes for ${text.length} characters`,
-      "Google החזירה קובץ אודיו קצר מדי ביחס לטקסט. הקריינות לא נשמרה כדי למנוע קובץ פגום."
-    );
-  }
-  return blob;
+  // כל בקשה קצרה ומוגבלת כדי למנוע מהמודל להחזיר אודיו חלקי
+  // בטקסטים ארוכים. האיחוד מתבצע ב-geminiAudioCall.
+  return extractInteractionWav(data);
 }
 
 function parsePodcastTurns(
