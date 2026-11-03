@@ -194,16 +194,20 @@ function extractAudio(data: any): Blob {
   return pcmBytesToWav(bytes, rate);
 }
 
-function extractInteractionWav(data: any): Blob {
+function extractInteractionWav(data: any, preferConvenienceAudio = false): Blob {
   const steps = Array.isArray(data?.steps) ? data.steps : [];
   const audioItems = steps
     .filter((step: any) => step?.type === "model_output" || step?.type === "output")
     .flatMap((step: any) => step?.content || [])
     .filter((item: any) => item?.type === "audio" && item?.data);
   const convenienceAudio = data?.output_audio;
-  const encodedBlocks = audioItems.length
-    ? audioItems.map((item: any) => item.data)
-    : convenienceAudio?.data ? [convenienceAudio.data] : [];
+  // For single-speaker TTS, use Google's canonical completed output.
+  // Step content may contain intermediate audio and must not override it.
+  const encodedBlocks = preferConvenienceAudio && convenienceAudio?.data
+    ? [convenienceAudio.data]
+    : audioItems.length
+      ? audioItems.map((item: any) => item.data)
+      : convenienceAudio?.data ? [convenienceAudio.data] : [];
 
   console.info("[VoiceMaster][TTS][response]", JSON.stringify({
     id: data?.id || null,
@@ -401,7 +405,7 @@ async function gemini38SingleSpeaker(
   }, opts);
   // כל בקשה קצרה ומוגבלת כדי למנוע מהמודל להחזיר אודיו חלקי
   // בטקסטים ארוכים. האיחוד מתבצע ב-geminiAudioCall.
-  return extractInteractionWav(data);
+  return extractInteractionWav(data, true);
 }
 
 function parsePodcastTurns(
