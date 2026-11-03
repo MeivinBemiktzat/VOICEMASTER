@@ -34,8 +34,18 @@ export async function getTracks(ownerId: string): Promise<LocalTrack[]> {
 export async function deleteTrack(ownerId: string, id: string) {
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite"); tx.objectStore(STORE).delete(`${ownerId}:${id}`);
-    tx.oncomplete=()=>resolve(); tx.onerror=()=>reject(tx.error);
+    const tx = db.transaction(STORE, "readwrite");
+    const store = tx.objectStore(STORE);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      for (const track of (req.result || []) as LocalTrack[]) {
+        if (track?.id === id && track?.ownerId === ownerId) store.delete(track.id);
+      }
+    };
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error("Track deletion aborted"));
   });
   db.close();
 }
@@ -43,9 +53,17 @@ export async function clearTracks(ownerId: string) {
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE, "readwrite");
-    const store = tx.objectStore(STORE); const req = store.getAllKeys();
-    req.onsuccess = () => req.result.forEach(k => { if (String(k).startsWith(ownerId + ":")) store.delete(k); });
-    tx.oncomplete=()=>resolve(); tx.onerror=()=>reject(tx.error);
+    const store = tx.objectStore(STORE);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      for (const track of (req.result || []) as LocalTrack[]) {
+        if (track?.ownerId === ownerId && typeof track.id === "string") store.delete(track.id);
+      }
+    };
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new Error("Track clearing aborted"));
   });
   db.close();
 }
