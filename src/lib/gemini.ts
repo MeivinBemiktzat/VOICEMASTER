@@ -201,39 +201,24 @@ function extractInteractionWav(data: any): Blob {
     .flatMap((step: any) => step?.content || [])
     .filter((item: any) => item?.type === "audio" && item?.data);
   const convenienceAudio = data?.output_audio;
+  const encodedBlocks = audioItems.length
+    ? audioItems.map((item: any) => item.data)
+    : convenienceAudio?.data ? [convenienceAudio.data] : [];
+
   console.info("[VoiceMaster][TTS][response]", JSON.stringify({
+    id: data?.id || null,
     status: data?.status || null,
     stepTypes: steps.map((step: any) => step?.type || "unknown"),
-    outputContentTypes: steps.filter((step: any) => step?.type === "model_output" || step?.type === "output")
-      .flatMap((step: any) => (step?.content || []).map((item: any) => item?.type || "unknown")),
-    audioBlocks: audioItems.map((item: any) => ({
-      mimeType: item?.mime_type || item?.mimeType || null,
-      sampleRate: item?.sample_rate || item?.sampleRate || null,
-      base64Characters: String(item?.data || "").length,
-    })),
-    outputAudioMimeType: convenienceAudio?.mime_type || convenienceAudio?.mimeType || null,
-    outputAudioSampleRate: convenienceAudio?.sample_rate || convenienceAudio?.sampleRate || null,
-    outputAudioBase64Characters: String(convenienceAudio?.data || "").length,
+    audioBlocks: encodedBlocks.length,
+    audioBase64Characters: encodedBlocks.reduce((sum: number, value: string) => sum + value.length, 0),
+    mimeType: convenienceAudio?.mime_type || audioItems[0]?.mime_type || null,
     responseKeys: Object.keys(data || {}),
   }));
 
-  // בתגובת REST ייתכנו כמה בלוקי audio בתוך steps.
-  // output_audio הוא convenience field שמצביע על הבלוק האחרון בלבד,
-  // ולכן אסור להעדיף אותו על פני איסוף כל הבלוקים.
-  const audioItems = (data?.steps || [])
-    .filter((step: any) => step?.type === "model_output" || step?.type === "output")
-    .flatMap((step: any) => step?.content || [])
-    .filter((item: any) => item?.type === "audio" && item?.data);
-
-  const encodedBlocks = audioItems.length
-    ? audioItems.map((item: any) => item.data)
-    : data?.output_audio?.data ? [data.output_audio.data] : [];
-
   if (!encodedBlocks.length) {
-    const status = data?.status || "unknown";
     throw new ApiCallError(
-      `No interaction audio returned (status: ${status})`,
-      "Google לא החזירה מקטעי אודיו. בדוק את פרטי התשובה ונסה שוב."
+      `No interaction audio returned (status: ${data?.status || "unknown"})`,
+      "Google לא החזירה אודיו. נסה שוב ובדוק את מצב הבקשה."
     );
   }
 
@@ -244,26 +229,12 @@ function extractInteractionWav(data: any): Blob {
     return pcmBytesToWav(only, 24000);
   }
 
-  // אם Google חילקה את הפלט למספר קובצי WAV, מסירים מכל אחד את הכותרת
-  // ומחברים את נתוני ה-PCM לקובץ WAV רציף אחד.
   const allWav = blocks.every((bytes: Uint8Array) => hasWavHeader(bytes));
   if (allWav) {
     const pcmBlocks = blocks.map((bytes: Uint8Array) => bytes.slice(44));
-    const combined = concatBytes(pcmBlocks);
-    console.info("[VoiceMaster][TTS] joined_audio_blocks", JSON.stringify({
-      blocks: blocks.length,
-      bytes: combined.length,
-    }));
-    return pcmBytesToWav(combined, 24000);
+    return pcmBytesToWav(concatBytes(pcmBlocks), 24000);
   }
-
-  // fallback לפלט PCM גולמי (24kHz, mono, 16-bit).
-  const combined = concatBytes(blocks);
-  console.info("[VoiceMaster][TTS] joined_raw_audio_blocks", JSON.stringify({
-    blocks: blocks.length,
-    bytes: combined.length,
-  }));
-  return pcmBytesToWav(combined, 24000);
+  return pcmBytesToWav(concatBytes(blocks), 24000);
 }
 
 function hasWavHeader(bytes: Uint8Array): boolean {
@@ -344,10 +315,31 @@ async function interactionsCall(model: string, payload: unknown, opts: ApiCallOp
         headers: { "Content-Type": "application/json", "x-goog-api-key": key },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
-      if (response.ok) return data;
-      lastError = new ApiCallError(data?.error?.message || "Interactions API failed", getHebrewApiError(response.status, data?.error?.message), response.status);
-      if (response.status !== 429 && response.status < 500) throw lastError;
+      let data = await response.json();
+      if (!response.ok) {
+        lastError = new ApiCallError(data?.error?.message || "Interactions API failed", getHebrewApiError(response.status, data?.error?.message), response.status);
+        if (response.status !== 429 && response.status < 500) throw lastError;
+        continue;
+      }
+
+      // אם Google מחזירה Interaction שעדיין רץ, ממתינים לתוצאה הסופית
+      // במקום לשמור את בלוק האודיו החלקי שהגיע בתשובת הביניים.
+      const id = data?.id;
+      for (let attempt = 0; id && ["in_progress", "running", "pending"].includes(String(data?.status || "").toLowerCase()) && attempt < 90; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const poll = await fetch(`https://generativelanguage.googleapis.com/v1beta/interactions/${encodeURIComponent(id)}`, {
+          headers: { "x-goog-api-key": key },
+        });
+        data = await poll.json();
+        if (!poll.ok) throw new ApiCallError(data?.error?.message || "Interactions polling failed", getHebrewApiError(poll.status, data?.error?.message), poll.status);
+      }
+      if (["in_progress", "running", "pending"].includes(String(data?.status || "").toLowerCase())) {
+        throw new ApiCallError("TTS interaction timed out", "יצירת הקריינות עדיין לא הסתיימה. נסה שוב.");
+      }
+      if (["failed", "cancelled"].includes(String(data?.status || "").toLowerCase())) {
+        throw new ApiCallError(data?.error?.message || "TTS interaction failed", "Google לא הצליחה להשלים את יצירת הקריינות.");
+      }
+      return data;
     } catch (error) {
       if (error instanceof ApiCallError) throw error;
       lastError = new ApiCallError((error as Error).message, "שגיאה ביצירת הקריינות דרך Gemini.");
@@ -372,7 +364,14 @@ async function gemini38SingleSpeaker(
     response_format: { type: "audio" },
     generation_config: { speech_config: [{ voice }] },
   }, opts);
-  return extractInteractionWav(data);
+  const blob = extractInteractionWav(data);
+  if (text.length > 100 && blob.size < 10000) {
+    throw new ApiCallError(
+      `Suspiciously short TTS output: ${blob.size} bytes for ${text.length} characters`,
+      "Google החזירה קובץ אודיו קצר מדי ביחס לטקסט. הקריינות לא נשמרה כדי למנוע קובץ פגום."
+    );
+  }
+  return blob;
 }
 
 function parsePodcastTurns(
