@@ -250,7 +250,9 @@ function base64ToBytes(value: string): Uint8Array {
   return result;
 }
 
-function pcmBytesToWav(pcm: Uint8Array, rate: number): Blob {
+function pcmBytesToWav(pcm: Uint8Array, rate: number, channels = 1, bits = 16): Blob {
+  const bytesPerSample = bits / 8;
+  const blockAlign = channels * bytesPerSample;
   const header = new ArrayBuffer(44);
   const view = new DataView(header);
   const write = (offset: number, value: string) => {
@@ -258,9 +260,9 @@ function pcmBytesToWav(pcm: Uint8Array, rate: number): Blob {
   };
   write(0, "RIFF"); view.setUint32(4, 36 + pcm.length, true);
   write(8, "WAVE"); write(12, "fmt "); view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true); view.setUint16(22, 1, true);
-  view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true);
-  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  view.setUint16(20, 1, true); view.setUint16(22, channels, true);
+  view.setUint32(24, rate, true); view.setUint32(28, rate * blockAlign, true);
+  view.setUint16(32, blockAlign, true); view.setUint16(34, bits, true);
   write(36, "data"); view.setUint32(40, pcm.length, true);
   return new Blob([header, pcm], { type: "audio/wav" });
 }
@@ -288,21 +290,53 @@ function splitTextForSpeech(input: string, maxChars: number): string[] {
 async function joinWavSegments(segments: Blob[]): Promise<Blob> {
   if (!segments.length) throw new ApiCallError("No audio segments", "לא נוצר אודיו.");
   if (segments.length === 1) return segments[0];
+
+  // Gemini may return WAV files with extra chunks before/after the audio data.
+  // Never assume a fixed 44-byte header: locate the actual "data" chunk and
+  // preserve the original PCM format when joining the segments.
   const decoded = await Promise.all(segments.map(async (blob) => {
     const bytes = new Uint8Array(await blob.arrayBuffer());
-    if (bytes.length < 44) throw new ApiCallError("Invalid WAV", "התקבל קובץ אודיו לא תקין.");
+    if (!hasWavHeader(bytes)) {
+      throw new ApiCallError("TTS segment is not a valid WAV file", "Google החזירה קטע אודיו בפורמט לא תקין.");
+    }
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    if (view.getUint16(22, true) !== 1 || view.getUint16(34, true) !== 16)
-      throw new ApiCallError("Unsupported WAV encoding", "פורמט האודיו אינו נתמך.");
-    return { rate: view.getUint32(24, true), pcm: bytes.slice(44) };
+    let offset = 12;
+    let format: { audioFormat: number; channels: number; rate: number; bits: number } | null = null;
+    let pcm: Uint8Array | null = null;
+    while (offset + 8 <= bytes.length) {
+      const id = String.fromCharCode(...bytes.slice(offset, offset + 4));
+      const size = view.getUint32(offset + 4, true);
+      const body = offset + 8;
+      if (body + size > bytes.length) break;
+      if (id === "fmt " && size >= 16) {
+        format = {
+          audioFormat: view.getUint16(body, true),
+          channels: view.getUint16(body + 2, true),
+          rate: view.getUint32(body + 4, true),
+          bits: view.getUint16(body + 14, true),
+        };
+      } else if (id === "data") {
+        pcm = bytes.slice(body, body + size);
+      }
+      offset = body + size + (size % 2);
+    }
+    if (!format || !pcm || format.audioFormat !== 1 || !format.channels || !format.rate || ![8, 16, 24, 32].includes(format.bits)) {
+      throw new ApiCallError("Unsupported WAV encoding", "פורמט האודיו שהתקבל מ-Google אינו נתמך.");
+    }
+    return { ...format, pcm };
   }));
-  if (decoded.some((item) => item.rate !== decoded[0].rate))
-    throw new ApiCallError("Sample rate mismatch", "קטעי האודיו התקבלו בקצב שונה.");
-  const total = decoded.reduce((sum, item) => sum + item.pcm.length, 0);
-  const joined = new Uint8Array(total);
-  let offset = 0;
-  for (const item of decoded) { joined.set(item.pcm, offset); offset += item.pcm.length; }
-  return pcmBytesToWav(joined, decoded[0].rate);
+
+  const first = decoded[0];
+  if (decoded.some((item) =>
+    item.audioFormat !== first.audioFormat ||
+    item.channels !== first.channels ||
+    item.rate !== first.rate ||
+    item.bits !== first.bits
+  )) {
+    throw new ApiCallError("WAV format mismatch between segments", "קטעי הקריינות התקבלו בפורמטים שונים ולא ניתן לחבר אותם בבטחה.");
+  }
+  const joined = concatBytes(decoded.map((item) => item.pcm));
+  return pcmBytesToWav(joined, first.rate, first.channels, first.bits);
 }
 
 async function interactionsCall(model: string, payload: unknown, opts: ApiCallOptions): Promise<any> {
