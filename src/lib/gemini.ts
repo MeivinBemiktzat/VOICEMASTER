@@ -195,6 +195,28 @@ function extractAudio(data: any): Blob {
 }
 
 function extractInteractionWav(data: any): Blob {
+  const steps = Array.isArray(data?.steps) ? data.steps : [];
+  const audioItems = steps
+    .filter((step: any) => step?.type === "model_output" || step?.type === "output")
+    .flatMap((step: any) => step?.content || [])
+    .filter((item: any) => item?.type === "audio" && item?.data);
+  const convenienceAudio = data?.output_audio;
+  console.info("[VoiceMaster][TTS][response]", JSON.stringify({
+    status: data?.status || null,
+    stepTypes: steps.map((step: any) => step?.type || "unknown"),
+    outputContentTypes: steps.filter((step: any) => step?.type === "model_output" || step?.type === "output")
+      .flatMap((step: any) => (step?.content || []).map((item: any) => item?.type || "unknown")),
+    audioBlocks: audioItems.map((item: any) => ({
+      mimeType: item?.mime_type || item?.mimeType || null,
+      sampleRate: item?.sample_rate || item?.sampleRate || null,
+      base64Characters: String(item?.data || "").length,
+    })),
+    outputAudioMimeType: convenienceAudio?.mime_type || convenienceAudio?.mimeType || null,
+    outputAudioSampleRate: convenienceAudio?.sample_rate || convenienceAudio?.sampleRate || null,
+    outputAudioBase64Characters: String(convenienceAudio?.data || "").length,
+    responseKeys: Object.keys(data || {}),
+  }));
+
   // בתגובת REST ייתכנו כמה בלוקי audio בתוך steps.
   // output_audio הוא convenience field שמצביע על הבלוק האחרון בלבד,
   // ולכן אסור להעדיף אותו על פני איסוף כל הבלוקים.
