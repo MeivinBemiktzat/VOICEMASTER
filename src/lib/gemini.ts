@@ -291,52 +291,53 @@ async function joinWavSegments(segments: Blob[]): Promise<Blob> {
   if (!segments.length) throw new ApiCallError("No audio segments", "לא נוצר אודיו.");
   if (segments.length === 1) return segments[0];
 
-  // Gemini may return WAV files with extra chunks before/after the audio data.
-  // Never assume a fixed 44-byte header: locate the actual "data" chunk and
-  // preserve the original PCM format when joining the segments.
-  const decoded = await Promise.all(segments.map(async (blob) => {
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    if (!hasWavHeader(bytes)) {
-      throw new ApiCallError("TTS segment is not a valid WAV file", "Google החזירה קטע אודיו בפורמט לא תקין.");
-    }
-    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    let offset = 12;
-    let format: { audioFormat: number; channels: number; rate: number; bits: number } | null = null;
-    let pcm: Uint8Array | null = null;
-    while (offset + 8 <= bytes.length) {
-      const id = String.fromCharCode(...bytes.slice(offset, offset + 4));
-      const size = view.getUint32(offset + 4, true);
-      const body = offset + 8;
-      if (body + size > bytes.length) break;
-      if (id === "fmt " && size >= 16) {
-        format = {
-          audioFormat: view.getUint16(body, true),
-          channels: view.getUint16(body + 2, true),
-          rate: view.getUint32(body + 4, true),
-          bits: view.getUint16(body + 14, true),
-        };
-      } else if (id === "data") {
-        pcm = bytes.slice(body, body + size);
-      }
-      offset = body + size + (size % 2);
-    }
-    if (!format || !pcm || format.audioFormat !== 1 || !format.channels || !format.rate || ![8, 16, 24, 32].includes(format.bits)) {
-      throw new ApiCallError("Unsupported WAV encoding", "פורמט האודיו שהתקבל מ-Google אינו נתמך.");
-    }
-    return { ...format, pcm };
-  }));
+  // Decode each returned WAV independently. Google can vary WAV metadata
+  // between chunks; decoding and re-rendering avoids corrupt raw-byte joins.
+  const audioContext = new AudioContext();
+  try {
+    const buffers = await Promise.all(segments.map(async (segment) => {
+      const bytes = await segment.arrayBuffer();
+      return audioContext.decodeAudioData(bytes.slice(0));
+    }));
+    const sampleRate = audioContext.sampleRate;
+    const channels = Math.max(...buffers.map((buffer) => buffer.numberOfChannels));
+    const totalFrames = buffers.reduce(
+      (sum, buffer) => sum + Math.ceil(buffer.duration * sampleRate),
+      0
+    );
+    if (!totalFrames) throw new Error("Decoded audio is empty");
 
-  const first = decoded[0];
-  if (decoded.some((item) =>
-    item.audioFormat !== first.audioFormat ||
-    item.channels !== first.channels ||
-    item.rate !== first.rate ||
-    item.bits !== first.bits
-  )) {
-    throw new ApiCallError("WAV format mismatch between segments", "קטעי הקריינות התקבלו בפורמטים שונים ולא ניתן לחבר אותם בבטחה.");
+    const offline = new OfflineAudioContext(channels, totalFrames, sampleRate);
+    let frameOffset = 0;
+    for (const buffer of buffers) {
+      const source = offline.createBufferSource();
+      source.buffer = buffer;
+      source.connect(offline.destination);
+      source.start(frameOffset / sampleRate);
+      frameOffset += Math.ceil(buffer.duration * sampleRate);
+    }
+
+    const rendered = await offline.startRendering();
+    const pcm = new Uint8Array(rendered.length * rendered.numberOfChannels * 2);
+    const view = new DataView(pcm.buffer);
+    let offset = 0;
+    for (let frame = 0; frame < rendered.length; frame++) {
+      for (let channel = 0; channel < rendered.numberOfChannels; channel++) {
+        const sample = Math.max(-1, Math.min(1, rendered.getChannelData(channel)[frame]));
+        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+        offset += 2;
+      }
+    }
+    return pcmBytesToWav(pcm, sampleRate, rendered.numberOfChannels, 16);
+  } catch (error) {
+    console.error("[VoiceMaster][TTS] WAV join failed", error);
+    throw new ApiCallError(
+      String((error as Error)?.message || error),
+      "לא ניתן לחבר את קטעי הקריינות שהתקבלו. נסה ליצור את הקריינות שוב."
+    );
+  } finally {
+    await audioContext.close().catch(() => undefined);
   }
-  const joined = concatBytes(decoded.map((item) => item.pcm));
-  return pcmBytesToWav(joined, first.rate, first.channels, first.bits);
 }
 
 async function interactionsCall(model: string, payload: unknown, opts: ApiCallOptions): Promise<any> {
