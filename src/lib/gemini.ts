@@ -195,12 +195,53 @@ function extractAudio(data: any): Blob {
 }
 
 function extractInteractionWav(data: any): Blob {
-  const audioItems = (data?.steps || []).flatMap((step: any) => step?.content || [])
+  // בתגובת REST ייתכנו כמה בלוקי audio בתוך steps.
+  // output_audio הוא convenience field שמצביע על הבלוק האחרון בלבד,
+  // ולכן אסור להעדיף אותו על פני איסוף כל הבלוקים.
+  const audioItems = (data?.steps || [])
+    .filter((step: any) => step?.type === "model_output" || step?.type === "output")
+    .flatMap((step: any) => step?.content || [])
     .filter((item: any) => item?.type === "audio" && item?.data);
-  const output = data?.output_audio?.data || audioItems[audioItems.length - 1]?.data;
-  if (!output) throw new ApiCallError("No interaction audio returned", "לא התקבל אודיו מלא מ-Google.");
-  const bytes = base64ToBytes(output);
-  return new Blob([bytes], { type: "audio/wav" });
+
+  const encodedBlocks = audioItems.length
+    ? audioItems.map((item: any) => item.data)
+    : data?.output_audio?.data ? [data.output_audio.data] : [];
+
+  if (!encodedBlocks.length) {
+    const status = data?.status || "unknown";
+    throw new ApiCallError(
+      `No interaction audio returned (status: ${status})`,
+      "Google לא החזירה מקטעי אודיו. בדוק את פרטי התשובה ונסה שוב."
+    );
+  }
+
+  const blocks = encodedBlocks.map((encoded: string) => base64ToBytes(encoded));
+  if (blocks.length === 1) {
+    const only = blocks[0];
+    if (hasWavHeader(only)) return new Blob([only], { type: "audio/wav" });
+    return pcmBytesToWav(only, 24000);
+  }
+
+  // אם Google חילקה את הפלט למספר קובצי WAV, מסירים מכל אחד את הכותרת
+  // ומחברים את נתוני ה-PCM לקובץ WAV רציף אחד.
+  const allWav = blocks.every((bytes: Uint8Array) => hasWavHeader(bytes));
+  if (allWav) {
+    const pcmBlocks = blocks.map((bytes: Uint8Array) => bytes.slice(44));
+    const combined = concatBytes(pcmBlocks);
+    console.info("[VoiceMaster][TTS] joined_audio_blocks", JSON.stringify({
+      blocks: blocks.length,
+      bytes: combined.length,
+    }));
+    return pcmBytesToWav(combined, 24000);
+  }
+
+  // fallback לפלט PCM גולמי (24kHz, mono, 16-bit).
+  const combined = concatBytes(blocks);
+  console.info("[VoiceMaster][TTS] joined_raw_audio_blocks", JSON.stringify({
+    blocks: blocks.length,
+    bytes: combined.length,
+  }));
+  return pcmBytesToWav(combined, 24000);
 }
 
 function hasWavHeader(bytes: Uint8Array): boolean {
