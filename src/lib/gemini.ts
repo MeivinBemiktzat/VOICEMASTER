@@ -89,7 +89,7 @@ export async function geminiAudioCall(
   opts: ApiCallOptions
 ): Promise<{ blob: Blob }> {
   const model = getSelectedTtsModel();
-  const chunks = splitTextForSpeech(text, 180);
+  const chunks = splitTextForSpeech(text, model.startsWith("gemini-3.8-") ? 1200 : 180);
   const audio: Blob[] = [];
   for (const chunk of chunks) {
     if (model.startsWith("gemini-3.8-")) {
